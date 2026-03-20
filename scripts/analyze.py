@@ -146,6 +146,95 @@ def generate_analysis(
         return _empty_analysis()
 
 
+def generate_watchlist_analysis(watchlist: list[dict], prices: dict, jp_items: list[dict], us_items: list[dict]) -> list[dict]:
+    """
+    ウォッチリスト銘柄（NEC・ソフトバンクG）の当日評価を生成。
+    Returns list of dicts with keys: ticker, name, emoji, rating, reason, points, caution
+    """
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return []
+
+    try:
+        import anthropic  # type: ignore
+    except ImportError:
+        return []
+
+    valid = [w for w in watchlist if w.get("price")]
+    if not valid:
+        return []
+
+    snapshot = _build_market_snapshot(prices)
+    news_text = _build_news_summary(jp_items, us_items)
+
+    stocks_text = "\n".join([
+        f"  {w['emoji']} {w['name']} ({w['ticker']}): {w['price']:,.1f}円  "
+        f"前日比 {w['arrow']}{w['change_pct']:+.2f}%  セクター: {w.get('sector','')}"
+        for w in valid
+    ])
+
+    prompt = f"""あなたは日本株のデイトレード専門アナリストです。
+以下の銘柄について、本日のデイトレード観点での評価を行ってください。
+
+【対象銘柄】
+{stocks_text}
+
+【市場環境】
+{snapshot}
+
+{news_text}
+
+---
+
+## 出力形式（JSONのみ、コードブロック不要）
+
+[
+  {{
+    "ticker":  "6701.T",
+    "name":    "NEC",
+    "emoji":   "🔵",
+    "rating":  "強気 | やや強気 | 中立 | やや弱気 | 弱気",
+    "score":   7,
+    "reason":  "本日の注目ポイントを3〜4文で。市場環境・セクター動向・個別材料を踏まえて。",
+    "points":  ["デイトレで注目すべきポイント1", "ポイント2", "ポイント3"],
+    "caution": "注意すべきリスクを1〜2文で。",
+    "entry_hint": "デイトレ観点でのエントリー・エグジットのヒントを1文で。"
+  }}
+]
+
+注意:
+- 対象銘柄すべてを含めること
+- score は1〜10の整数（10が最強気）
+- 投資助言にならないよう「注目」「観察」「ヒント」等の表現を使うこと
+- JSONのみを返すこと"""
+
+    try:
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        start = raw.find("[")
+        end   = raw.rfind("]") + 1
+        result = json.loads(raw[start:end])
+
+        # watchlist の price/change_pct を補完
+        price_map = {w["ticker"]: w for w in valid}
+        for item in result:
+            base = price_map.get(item.get("ticker"), {})
+            item["price"]      = base.get("price")
+            item["change_pct"] = base.get("change_pct")
+            item["direction"]  = base.get("direction", "flat")
+            item["arrow"]      = base.get("arrow", "")
+        return result
+
+    except Exception as e:
+        print(f"WARNING: Watchlist analysis failed: {e}", file=sys.stderr)
+        return []
+
+
 def _empty_analysis() -> dict:
     return {
         "commentary": {

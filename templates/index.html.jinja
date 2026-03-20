@@ -3,530 +3,283 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🌍 世界の株式市場ニュース</title>
-
-  <!-- Google Fonts -->
+  <title>🌍 世界の株式市場ダッシュボード</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
-
-  <!-- Alpine.js (モーダル制御) -->
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <style>
-    /* ── リセット & ベース ─────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg0:      #0a0a1a;
-      --bg1:      #11112a;
-      --bg2:      #1a1a3a;
-      --glass:    rgba(255,255,255,0.06);
-      --glass-b:  rgba(255,255,255,0.12);
-      --up:       #00ffa3;
-      --down:     #ff4d6d;
-      --flat:     #aaaacc;
-      --accent1:  #7c3aed;
-      --accent2:  #ec4899;
-      --accent3:  #06b6d4;
-      --text:     #e2e8f0;
-      --muted:    #94a3b8;
-      --radius:   16px;
+      --bg0: #0a0a1a; --bg1: #11112a; --bg2: #1a1a3a;
+      --glass: rgba(255,255,255,.06); --glass-b: rgba(255,255,255,.12);
+      --up: #00ffa3; --down: #ff4d6d; --flat: #aaaacc;
+      --accent1: #7c3aed; --accent2: #ec4899; --accent3: #06b6d4;
+      --text: #e2e8f0; --muted: #94a3b8; --radius: 14px;
     }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Noto Sans JP', 'Inter', sans-serif;
-      background: var(--bg0);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* ── アニメーション背景 ─────────────────────────────────────── */
+    body { font-family:'Noto Sans JP','Inter',sans-serif; background:var(--bg0); color:var(--text); min-height:100vh; overflow-x:hidden; }
     body::before {
-      content: "";
-      position: fixed; inset: 0; z-index: -1;
-      background:
-        radial-gradient(ellipse 80% 50% at 20% -10%,  rgba(124,58,237,.35) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 40% at 80% 110%,  rgba(6,182,212,.25)  0%, transparent 55%),
-        radial-gradient(ellipse 50% 60% at 50%  50%,  rgba(236,72,153,.12) 0%, transparent 70%);
+      content:""; position:fixed; inset:0; z-index:-1;
+      background: radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,.35) 0%,transparent 60%),
+                  radial-gradient(ellipse 60% 40% at 80% 110%, rgba(6,182,212,.25) 0%,transparent 55%),
+                  radial-gradient(ellipse 50% 60% at 50% 50%,  rgba(236,72,153,.12) 0%,transparent 70%);
       animation: bgPulse 12s ease-in-out infinite alternate;
     }
-    @keyframes bgPulse {
-      0%   { opacity: .8; }
-      100% { opacity: 1;  }
-    }
+    @keyframes bgPulse { 0%{opacity:.8} 100%{opacity:1} }
+    .up{color:var(--up)} .down{color:var(--down)} .flat{color:var(--flat)}
+    .glass { background:var(--glass); border:1px solid var(--glass-b); backdrop-filter:blur(12px); border-radius:var(--radius); }
 
-    /* ── ユーティリティ ─────────────────────────────────────────── */
-    .up   { color: var(--up);   }
-    .down { color: var(--down); }
-    .flat { color: var(--flat); }
-
-    .glass {
-      background: var(--glass);
-      border: 1px solid var(--glass-b);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border-radius: var(--radius);
-    }
-
-    /* ── ヘッダー ────────────────────────────────────────────────── */
-    header {
-      text-align: center;
-      padding: 3rem 1rem 2rem;
-      position: relative;
-    }
+    /* ── ヘッダー ── */
+    header { text-align:center; padding:2rem 1rem 1rem; }
     .site-title {
-      font-size: clamp(2rem, 6vw, 3.8rem);
-      font-weight: 900;
-      background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.02em;
-      line-height: 1.15;
-      text-shadow: none;
-      animation: titleGlow 4s ease-in-out infinite alternate;
+      font-size:clamp(1.6rem,5vw,3rem); font-weight:900;
+      background:linear-gradient(135deg,#a78bfa,#ec4899,#06b6d4);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      animation:titleGlow 4s ease-in-out infinite alternate;
     }
     @keyframes titleGlow {
-      from { filter: drop-shadow(0 0 20px rgba(167,139,250,.4)); }
-      to   { filter: drop-shadow(0 0 40px rgba(236,72,153,.5)); }
-    }
-    .subtitle {
-      margin-top: .5rem;
-      font-size: .95rem;
-      color: var(--muted);
+      from{filter:drop-shadow(0 0 20px rgba(167,139,250,.4))}
+      to  {filter:drop-shadow(0 0 40px rgba(236,72,153,.5))}
     }
     .update-badge {
-      display: inline-flex; align-items: center; gap: .4rem;
-      margin-top: 1rem;
-      padding: .35rem 1rem;
-      background: rgba(6,182,212,.15);
-      border: 1px solid rgba(6,182,212,.3);
-      border-radius: 999px;
-      font-size: .8rem;
-      color: var(--accent3);
+      display:inline-flex; align-items:center; gap:.4rem; margin-top:.6rem;
+      padding:.3rem .9rem; background:rgba(6,182,212,.15); border:1px solid rgba(6,182,212,.3);
+      border-radius:999px; font-size:.78rem; color:var(--accent3);
     }
-    .pulse-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--accent3);
-      animation: pulse 1.5s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%,100% { opacity: 1; transform: scale(1);   }
-      50%      { opacity: .4; transform: scale(1.5); }
-    }
+    .pulse-dot { width:7px; height:7px; border-radius:50%; background:var(--accent3); animation:pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
 
-    /* ── セクション共通 ─────────────────────────────────────────── */
-    .section { padding: 1.5rem 1rem; max-width: 1400px; margin: 0 auto; }
-    .section-title {
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-      display: flex; align-items: center; gap: .5rem;
-    }
+    /* ── ティッカーバー ── */
+    .ticker-wrap { overflow:hidden; background:rgba(255,255,255,.04); border-top:1px solid rgba(255,255,255,.08); border-bottom:1px solid rgba(255,255,255,.08); padding:.5rem 0; white-space:nowrap; }
+    .ticker-track { display:inline-flex; gap:2rem; animation:tickerScroll 50s linear infinite; }
+    .ticker-wrap:hover .ticker-track { animation-play-state:paused; }
+    @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .ticker-item { display:inline-flex; align-items:center; gap:.35rem; font-size:.82rem; font-weight:700; }
 
-    /* ── 価格ティッカーバー ─────────────────────────────────────── */
-    .ticker-wrap {
-      overflow: hidden;
-      background: rgba(255,255,255,.04);
-      border-top: 1px solid rgba(255,255,255,.08);
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      padding: .6rem 0;
-      white-space: nowrap;
-    }
-    .ticker-track {
-      display: inline-flex; gap: 2.5rem;
-      animation: tickerScroll 40s linear infinite;
-    }
-    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
-    @keyframes tickerScroll {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-    .ticker-item {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-size: .85rem; font-weight: 700;
-    }
+    /* ── セクション共通 ── */
+    .section { padding:1.2rem 1rem; max-width:1400px; margin:0 auto; }
+    .section-title { font-size:1.1rem; font-weight:700; margin-bottom:.8rem; display:flex; align-items:center; gap:.5rem; }
+    .divider { height:1px; background:linear-gradient(90deg,transparent,rgba(167,139,250,.3),transparent); margin:.25rem 0; max-width:1400px; margin-left:auto; margin-right:auto; }
 
-    /* ── 指数カード ─────────────────────────────────────────────── */
-    .index-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-      gap: 1rem;
+    /* ── 市場タイマー ── */
+    .timer-bar {
+      max-width:1400px; margin:0 auto; padding:.7rem 1rem;
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:.5rem;
+      background:rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.08);
     }
-    .index-card {
-      padding: 1.25rem 1rem;
-      border-radius: var(--radius);
-      background: var(--glass);
-      border: 1px solid var(--glass-b);
-      text-align: center;
-      transition: transform .2s, box-shadow .2s;
+    .timer-clock { font-size:1.5rem; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:.05em; }
+    .market-status { display:flex; align-items:center; gap:.6rem; flex-wrap:wrap; }
+    .status-badge {
+      padding:.3rem .9rem; border-radius:999px; font-size:.78rem; font-weight:700;
+      display:inline-flex; align-items:center; gap:.35rem;
     }
-    .index-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 32px rgba(124,58,237,.25);
-    }
-    .index-card .idx-emoji { font-size: 1.8rem; }
-    .index-card .idx-name  { font-size: .8rem; color: var(--muted); margin: .25rem 0; }
-    .index-card .idx-price { font-size: 1.1rem; font-weight: 700; }
-    .index-card .idx-pct   { font-size: .85rem; font-weight: 700; margin-top: .2rem; }
+    .status-open    { background:rgba(0,255,163,.15); border:1px solid rgba(0,255,163,.4); color:var(--up); }
+    .status-closed  { background:rgba(170,170,204,.1); border:1px solid rgba(170,170,204,.25); color:var(--flat); }
+    .status-pre     { background:rgba(251,191,36,.12); border:1px solid rgba(251,191,36,.3); color:#fbbf24; }
+    .status-lunch   { background:rgba(6,182,212,.12);  border:1px solid rgba(6,182,212,.3);  color:var(--accent3); }
+    .countdown { font-size:.82rem; color:var(--muted); }
 
-    /* ── 仮想通貨 ───────────────────────────────────────────────── */
-    .crypto-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 1rem;
+    /* ── 寄り付き前チェック ── */
+    .premarket-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; }
+    @media(max-width:600px){ .premarket-grid{ grid-template-columns:1fr 1fr; } }
+    .premarket-card {
+      padding:.85rem 1rem; border-radius:var(--radius); text-align:center;
+      background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(245,158,11,.06));
+      border:1px solid rgba(251,191,36,.25); transition:transform .2s;
     }
-    .crypto-card {
-      padding: 1.25rem 1rem;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.1));
-      border: 1px solid rgba(167,139,250,.25);
-      text-align: center;
-      transition: transform .2s, border-color .2s;
-    }
-    .crypto-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(167,139,250,.6);
-    }
-    .crypto-card .c-symbol { font-size: 2rem; }
-    .crypto-card .c-name   { font-size: .75rem; color: var(--muted); }
-    .crypto-card .c-price  { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
-    .crypto-card .c-pct    { font-size: .85rem; font-weight: 700; }
+    .premarket-card:hover { transform:translateY(-3px); }
+    .premarket-card .pm-emoji { font-size:1.4rem; }
+    .premarket-card .pm-name  { font-size:.7rem; color:var(--muted); margin:.2rem 0; }
+    .premarket-card .pm-price { font-size:1rem; font-weight:700; }
+    .premarket-card .pm-pct   { font-size:.8rem; font-weight:700; margin-top:.15rem; }
 
-    /* ── コモディティ ────────────────────────────────────────────── */
-    .commodity-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 1rem;
+    /* ── コンパクト価格行（指数・コモディティ・仮想通貨）── */
+    .compact-row { display:flex; flex-wrap:wrap; gap:.5rem; }
+    .compact-chip {
+      display:inline-flex; align-items:center; gap:.4rem;
+      padding:.45rem .85rem; border-radius:999px;
+      background:var(--glass); border:1px solid var(--glass-b);
+      font-size:.82rem; font-weight:700; transition:transform .15s;
+      white-space:nowrap;
     }
-    .commodity-card {
-      padding: 1.25rem 1rem;
-      border-radius: var(--radius);
-      background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(16,185,129,.08));
-      border: 1px solid rgba(6,182,212,.2);
-      text-align: center;
-      transition: transform .2s, border-color .2s;
-    }
-    .commodity-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(6,182,212,.5);
-    }
-    .commodity-card .m-emoji { font-size: 2rem; }
-    .commodity-card .m-name  { font-size: .75rem; color: var(--muted); }
-    .commodity-card .m-price { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
-    .commodity-card .m-pct   { font-size: .85rem; font-weight: 700; }
-    .commodity-card .m-unit  { font-size: .65rem; color: var(--muted); }
+    .compact-chip:hover { transform:scale(1.04); }
+    .compact-chip .chip-name  { color:var(--muted); font-size:.75rem; }
+    .compact-chip .chip-price { }
+    .compact-chip .chip-pct   { font-size:.75rem; }
 
-    /* ── セクター ───────────────────────────────────────────────── */
-    .sector-grid {
-      display: flex; flex-wrap: wrap; gap: .6rem;
+    /* ── 為替感応度マップ ── */
+    .fx-map { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    @media(max-width:500px){ .fx-map{ grid-template-columns:1fr; } }
+    .fx-card {
+      padding:1rem; border-radius:var(--radius);
     }
+    .fx-card.weak-yen  { background:rgba(0,255,163,.07);  border:1px solid rgba(0,255,163,.2); }
+    .fx-card.strong-yen{ background:rgba(255,77,109,.07); border:1px solid rgba(255,77,109,.2); }
+    .fx-card-title { font-size:.82rem; font-weight:700; margin-bottom:.6rem; display:flex; align-items:center; gap:.4rem; }
+    .fx-tag {
+      display:inline-block; padding:.2rem .6rem; border-radius:999px;
+      font-size:.72rem; font-weight:700; margin:.2rem .2rem .2rem 0;
+    }
+    .fx-up   { background:rgba(0,255,163,.15);  color:var(--up);   border:1px solid rgba(0,255,163,.3);  }
+    .fx-down { background:rgba(255,77,109,.15); color:var(--down); border:1px solid rgba(255,77,109,.3); }
+    .fx-indicator {
+      display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem;
+      padding:.5rem .85rem; border-radius:999px; font-size:.85rem; font-weight:700;
+      width:fit-content;
+    }
+    .fx-indicator.up   { background:rgba(0,255,163,.12); border:1px solid rgba(0,255,163,.3); color:var(--up); }
+    .fx-indicator.down { background:rgba(255,77,109,.12); border:1px solid rgba(255,77,109,.3); color:var(--down); }
+    .fx-indicator.flat { background:rgba(170,170,204,.08); border:1px solid rgba(170,170,204,.2); color:var(--flat); }
+
+    /* ── セクターピル ── */
+    .sector-grid { display:flex; flex-wrap:wrap; gap:.5rem; }
     .sector-pill {
-      display: flex; align-items: center; gap: .4rem;
-      padding: .5rem 1rem;
-      border-radius: 999px;
-      font-size: .85rem; font-weight: 700;
-      transition: transform .15s;
-      cursor: default;
+      display:flex; align-items:center; gap:.35rem; padding:.42rem .85rem;
+      border-radius:999px; font-size:.8rem; font-weight:700; transition:transform .15s; cursor:default;
     }
-    .sector-pill:hover { transform: scale(1.06); }
-    .sector-pill.up   { background: rgba(0,255,163,.12); border: 1px solid rgba(0,255,163,.3); color: var(--up); }
-    .sector-pill.down { background: rgba(255,77,109,.12); border: 1px solid rgba(255,77,109,.3); color: var(--down); }
-    .sector-pill.flat { background: rgba(170,170,204,.08); border: 1px solid rgba(170,170,204,.2); color: var(--flat); }
+    .sector-pill:hover { transform:scale(1.06); }
+    .sector-pill.up   { background:rgba(0,255,163,.12);   border:1px solid rgba(0,255,163,.3);   color:var(--up); }
+    .sector-pill.down { background:rgba(255,77,109,.12);  border:1px solid rgba(255,77,109,.3);  color:var(--down); }
+    .sector-pill.flat { background:rgba(170,170,204,.08); border:1px solid rgba(170,170,204,.2); color:var(--flat); }
 
-    /* ── ニュースグリッド ────────────────────────────────────────── */
-    .news-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
+    /* ── 値上がり・値下がりランキング ── */
+    .ranking-grid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+    @media(max-width:500px){ .ranking-grid{ grid-template-columns:1fr; } }
+    .ranking-list { border-radius:var(--radius); overflow:hidden; }
+    .ranking-header {
+      padding:.6rem 1rem; font-size:.82rem; font-weight:700;
+      display:flex; align-items:center; gap:.4rem;
     }
-    @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
+    .ranking-header.up-head   { background:rgba(0,255,163,.12);  border:1px solid rgba(0,255,163,.25);  color:var(--up);   border-bottom:none; border-radius:var(--radius) var(--radius) 0 0; }
+    .ranking-header.down-head { background:rgba(255,77,109,.12); border:1px solid rgba(255,77,109,.25); color:var(--down); border-bottom:none; border-radius:var(--radius) var(--radius) 0 0; }
+    .ranking-body.up-body   { border:1px solid rgba(0,255,163,.2);  border-top:none; border-radius:0 0 var(--radius) var(--radius); background:rgba(0,255,163,.03); }
+    .ranking-body.down-body { border:1px solid rgba(255,77,109,.2); border-top:none; border-radius:0 0 var(--radius) var(--radius); background:rgba(255,77,109,.03); }
+    .ranking-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.55rem 1rem; border-bottom:1px solid rgba(255,255,255,.05); font-size:.85rem;
+    }
+    .ranking-row:last-child { border-bottom:none; }
+    .rank-num { font-size:.7rem; color:var(--muted); width:1.2rem; flex-shrink:0; }
+    .rank-name { flex:1; font-weight:700; }
+    .rank-pct  { font-weight:700; font-size:.88rem; }
 
-    .news-column-title {
-      font-size: 1.1rem; font-weight: 700;
-      padding: .75rem 1rem;
-      border-radius: var(--radius) var(--radius) 0 0;
-      display: flex; align-items: center; gap: .5rem;
+    /* ── ウォッチリスト ── */
+    .watchlist-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:1rem; }
+    .watch-card {
+      border-radius:var(--radius); overflow:hidden;
+      background:var(--glass); border:1px solid rgba(255,255,255,.1);
+      transition:transform .2s, box-shadow .2s;
     }
-    .news-column-title.jp {
-      background: linear-gradient(90deg, rgba(236,72,153,.3), rgba(124,58,237,.2));
-      border: 1px solid rgba(236,72,153,.3); border-bottom: none;
+    .watch-card:hover { transform:translateY(-4px); box-shadow:0 10px 35px rgba(0,0,0,.4); }
+    .watch-header {
+      padding:.85rem 1rem; display:flex; align-items:center; gap:.75rem;
+      background:rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.07);
     }
-    .news-column-title.us {
-      background: linear-gradient(90deg, rgba(6,182,212,.3), rgba(59,130,246,.2));
-      border: 1px solid rgba(6,182,212,.3); border-bottom: none;
+    .watch-emoji { font-size:2rem; flex-shrink:0; }
+    .watch-info  { flex:1; }
+    .watch-name  { font-size:1rem; font-weight:700; }
+    .watch-sector{ font-size:.72rem; color:var(--muted); }
+    .watch-price-block { text-align:right; }
+    .watch-price { font-size:1rem; font-weight:700; }
+    .watch-pct   { font-size:.82rem; font-weight:700; }
+    .score-bar-wrap { padding:.6rem 1rem .4rem; }
+    .score-label { font-size:.7rem; color:var(--muted); margin-bottom:.3rem; display:flex; justify-content:space-between; }
+    .score-bar { height:6px; border-radius:3px; background:rgba(255,255,255,.08); overflow:hidden; }
+    .score-fill { height:100%; border-radius:3px; transition:width .8s ease; }
+    .rating-badge {
+      display:inline-block; padding:.25rem .7rem; border-radius:999px;
+      font-size:.72rem; font-weight:700; margin-left:.5rem;
     }
+    .r-強気    { background:rgba(0,255,163,.2);   color:var(--up);   border:1px solid rgba(0,255,163,.4);   }
+    .r-やや強気 { background:rgba(0,255,163,.1);   color:var(--up);   border:1px solid rgba(0,255,163,.25);  }
+    .r-中立    { background:rgba(170,170,204,.1); color:var(--flat); border:1px solid rgba(170,170,204,.25); }
+    .r-やや弱気 { background:rgba(255,77,109,.1);  color:var(--down); border:1px solid rgba(255,77,109,.25); }
+    .r-弱気    { background:rgba(255,77,109,.2);   color:var(--down); border:1px solid rgba(255,77,109,.4);  }
+    .watch-body { padding:.75rem 1rem; }
+    .watch-reason { font-size:.87rem; line-height:1.75; color:var(--text); margin-bottom:.6rem; }
+    .watch-points { list-style:none; margin-bottom:.6rem; }
+    .watch-points li { font-size:.82rem; color:#a5f3fc; padding:.2rem 0; display:flex; gap:.4rem; }
+    .watch-points li::before { content:"▸"; color:var(--accent3); flex-shrink:0; }
+    .watch-caution { font-size:.8rem; color:#fca5a5; padding:.5rem .75rem; background:rgba(255,77,109,.08); border-left:3px solid rgba(255,77,109,.4); border-radius:0 6px 6px 0; }
+    .watch-entry { font-size:.8rem; color:#fde68a; margin-top:.6rem; padding:.5rem .75rem; background:rgba(251,191,36,.08); border-left:3px solid rgba(251,191,36,.4); border-radius:0 6px 6px 0; }
 
-    .news-list {
-      border-radius: 0 0 var(--radius) var(--radius);
-      overflow: hidden;
-    }
-    .news-list.jp { border: 1px solid rgba(236,72,153,.25); border-top: none; }
-    .news-list.us { border: 1px solid rgba(6,182,212,.25);  border-top: none; }
+    /* ── 市場解説 ── */
+    .commentary-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:.9rem; }
+    .commentary-card { padding:1rem 1rem 1rem .9rem; border-radius:var(--radius); border-left:4px solid; background:var(--glass); transition:transform .2s; }
+    .commentary-card:hover { transform:translateY(-3px); }
+    .overview-card { border-color:#a78bfa; background:rgba(124,58,237,.1); }
+    .drivers-card  { border-color:#f472b6; background:rgba(236,72,153,.08); }
+    .trends-card   { border-color:#22d3ee; background:rgba(6,182,212,.08); }
+    .commentary-icon { font-size:1.4rem; margin-bottom:.3rem; }
+    .commentary-label { font-size:.68rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:.4rem; }
+    .commentary-text { font-size:.88rem; line-height:1.8; }
 
-    /* ── ニュースカード ─────────────────────────────────────────── */
-    .news-card {
-      display: flex; align-items: flex-start; gap: .75rem;
-      padding: .9rem 1rem;
-      cursor: pointer;
-      transition: background .2s;
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .news-card:last-child { border-bottom: none; }
-    .news-card:hover { background: rgba(255,255,255,.07); }
-    .news-card .news-icon {
-      font-size: 1.4rem;
-      flex-shrink: 0;
-      margin-top: .1rem;
-    }
-    .news-card .news-body { flex: 1; min-width: 0; }
-    .news-card .news-title {
-      font-size: .9rem; font-weight: 700;
-      line-height: 1.4;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .news-card .news-date {
-      font-size: .72rem; color: var(--muted);
-      margin-top: .3rem;
-    }
-    .news-card .news-arrow {
-      color: var(--muted); font-size: .9rem;
-      flex-shrink: 0; align-self: center;
-    }
+    /* ── 注目銘柄 ── */
+    .featured-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1rem; }
+    .featured-card { border-radius:var(--radius); background:var(--glass); border:1px solid rgba(255,255,255,.1); overflow:hidden; transition:transform .2s, box-shadow .2s; }
+    .featured-card:hover { transform:translateY(-5px); box-shadow:0 12px 40px rgba(0,0,0,.4); }
+    .featured-card.risk-高 { border-top:3px solid #ff4d6d; }
+    .featured-card.risk-中 { border-top:3px solid #fbbf24; }
+    .featured-card.risk-低 { border-top:3px solid #00ffa3; }
+    .featured-header { display:flex; align-items:center; gap:.65rem; padding:.85rem .85rem .65rem; background:rgba(255,255,255,.04); border-bottom:1px solid rgba(255,255,255,.07); }
+    .featured-emoji { font-size:1.9rem; flex-shrink:0; }
+    .featured-name  { font-size:.95rem; font-weight:700; margin-bottom:.3rem; }
+    .featured-badges { display:flex; flex-wrap:wrap; gap:.25rem; }
+    .type-badge { font-size:.62rem; font-weight:700; padding:.12rem .45rem; border-radius:999px; background:rgba(124,58,237,.3); border:1px solid rgba(167,139,250,.4); color:#c4b5fd; }
+    .tag-badge  { font-size:.62rem; font-weight:700; padding:.12rem .45rem; border-radius:999px; background:rgba(6,182,212,.2); border:1px solid rgba(6,182,212,.35); color:#67e8f9; }
+    .risk-badge { font-size:.62rem; font-weight:700; padding:.12rem .45rem; border-radius:999px; }
+    .risk-badge.risk-高 { background:rgba(255,77,109,.2);  border:1px solid rgba(255,77,109,.4);  color:#ff4d6d; }
+    .risk-badge.risk-中 { background:rgba(251,191,36,.15); border:1px solid rgba(251,191,36,.35); color:#fbbf24; }
+    .risk-badge.risk-低 { background:rgba(0,255,163,.12);  border:1px solid rgba(0,255,163,.3);  color:#00ffa3; }
+    .featured-section { padding:.65rem .85rem; border-bottom:1px solid rgba(255,255,255,.05); }
+    .featured-section:last-child { border-bottom:none; }
+    .featured-section-title { font-size:.68rem; font-weight:700; letter-spacing:.06em; color:var(--muted); margin-bottom:.3rem; }
+    .featured-body { font-size:.84rem; line-height:1.75; }
+    .featured-body.outlook { color:#a5f3fc; }
 
-    /* ── モーダル ────────────────────────────────────────────────── */
-    .modal-overlay {
-      position: fixed; inset: 0; z-index: 9999;
-      background: rgba(0,0,0,.75);
-      backdrop-filter: blur(6px);
-      display: flex; align-items: center; justify-content: center;
-      padding: 1rem;
-    }
-    .modal-box {
-      width: 100%; max-width: 560px;
-      border-radius: 24px;
-      background: linear-gradient(135deg, #1a1a3a, #11112a);
-      border: 1px solid rgba(167,139,250,.3);
-      box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 60px rgba(124,58,237,.2);
-      overflow: hidden;
-    }
-    .modal-header {
-      padding: 1.25rem 1.5rem .75rem;
-      background: linear-gradient(90deg, rgba(124,58,237,.2), rgba(236,72,153,.15));
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      display: flex; align-items: flex-start; gap: .75rem;
-    }
-    .modal-header .m-emoji { font-size: 1.8rem; flex-shrink: 0; }
-    .modal-header .m-title { font-size: 1rem; font-weight: 700; line-height: 1.45; flex: 1; }
-    .modal-close {
-      background: rgba(255,255,255,.1); border: none; cursor: pointer;
-      color: var(--text); font-size: 1.2rem;
-      width: 32px; height: 32px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; transition: background .2s;
-    }
-    .modal-close:hover { background: rgba(255,255,255,.2); }
-    .modal-body { padding: 1.25rem 1.5rem; }
-    .modal-original {
-      font-size: .78rem; color: var(--muted);
-      margin-bottom: .75rem;
-      padding: .5rem .75rem;
-      background: rgba(255,255,255,.04);
-      border-radius: 8px;
-      border-left: 3px solid rgba(167,139,250,.4);
-    }
-    .modal-summary {
-      font-size: .95rem; line-height: 1.7;
-      color: var(--text);
-    }
-    .modal-footer {
-      padding: .75rem 1.5rem 1.25rem;
-      display: flex; justify-content: flex-end;
-    }
-    .modal-link {
-      display: inline-flex; align-items: center; gap: .4rem;
-      padding: .55rem 1.25rem;
-      background: linear-gradient(135deg, var(--accent1), var(--accent2));
-      border-radius: 999px;
-      color: #fff; font-weight: 700; font-size: .85rem;
-      text-decoration: none;
-      transition: opacity .2s, transform .2s;
-    }
-    .modal-link:hover { opacity: .85; transform: scale(1.04); }
+    /* ── AI バッジ ── */
+    .ai-badge { font-size:.62rem; font-weight:700; padding:.18rem .55rem; background:linear-gradient(135deg,rgba(124,58,237,.4),rgba(236,72,153,.3)); border:1px solid rgba(167,139,250,.4); border-radius:999px; color:#c4b5fd; vertical-align:middle; margin-left:.4rem; }
 
-    /* モーダルアニメーション */
-    [x-cloak] { display: none !important; }
-    .modal-overlay {
-      transition: opacity .2s;
-    }
-    .modal-box {
-      transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
-    }
+    /* ── APIキー未設定通知 ── */
+    .no-api-notice { display:flex; align-items:flex-start; gap:.85rem; padding:1rem 1.25rem; background:rgba(251,191,36,.06); border:1px dashed rgba(251,191,36,.35); border-radius:var(--radius); color:var(--muted); }
+    .no-api-icon  { font-size:1.6rem; flex-shrink:0; }
+    .no-api-title { font-weight:700; color:#fbbf24; margin-bottom:.25rem; }
+    .no-api-body  { font-size:.85rem; line-height:1.65; }
+    .no-api-body code { background:rgba(255,255,255,.1); padding:.1rem .35rem; border-radius:4px; font-family:monospace; color:#a78bfa; }
 
-    /* ── フッター ────────────────────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 2rem 1rem;
-      font-size: .78rem;
-      color: var(--muted);
-      border-top: 1px solid rgba(255,255,255,.07);
-      margin-top: 2rem;
-    }
-    footer a { color: var(--accent3); text-decoration: none; }
+    /* ── フッター ── */
+    footer { text-align:center; padding:1.5rem 1rem; font-size:.75rem; color:var(--muted); border-top:1px solid rgba(255,255,255,.07); margin-top:1.5rem; }
+    footer a { color:var(--accent3); text-decoration:none; }
 
-    /* ── セパレーター ────────────────────────────────────────────── */
-    .divider {
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(167,139,250,.3), transparent);
-      margin: .5rem 0;
-    }
-
-    /* ── AI バッジ ──────────────────────────────────────────────── */
-    .ai-badge {
-      font-size: .65rem; font-weight: 700;
-      padding: .2rem .6rem;
-      background: linear-gradient(135deg, rgba(124,58,237,.4), rgba(236,72,153,.3));
-      border: 1px solid rgba(167,139,250,.4);
-      border-radius: 999px;
-      color: #c4b5fd;
-      vertical-align: middle;
-      margin-left: .4rem;
-    }
-
-    /* ── 市場解説 ────────────────────────────────────────────────── */
-    .commentary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1rem;
-    }
-    .commentary-card {
-      padding: 1.25rem 1.25rem 1.25rem 1rem;
-      border-radius: var(--radius);
-      border-left: 4px solid;
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      transition: transform .2s;
-    }
-    .commentary-card:hover { transform: translateY(-3px); }
-    .overview-card { border-color: #a78bfa; background: rgba(124,58,237,.1); }
-    .drivers-card  { border-color: #f472b6; background: rgba(236,72,153,.08); }
-    .trends-card   { border-color: #22d3ee; background: rgba(6,182,212,.08);  }
-    .commentary-icon { font-size: 1.6rem; margin-bottom: .4rem; }
-    .commentary-label {
-      font-size: .72rem; font-weight: 700; letter-spacing: .08em;
-      text-transform: uppercase; color: var(--muted); margin-bottom: .5rem;
-    }
-    .commentary-text {
-      font-size: .92rem; line-height: 1.8; color: var(--text);
-    }
-
-    /* ── 注目銘柄特集 ────────────────────────────────────────────── */
-    .featured-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
-    }
-    .featured-card {
-      border-radius: var(--radius);
-      background: var(--glass);
-      border: 1px solid rgba(255,255,255,.1);
-      overflow: hidden;
-      transition: transform .2s, box-shadow .2s;
-    }
-    .featured-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(0,0,0,.4);
-    }
-    .featured-card.risk-高 { border-top: 3px solid #ff4d6d; }
-    .featured-card.risk-中 { border-top: 3px solid #fbbf24; }
-    .featured-card.risk-低 { border-top: 3px solid #00ffa3; }
-
-    .featured-header {
-      display: flex; align-items: center; gap: .75rem;
-      padding: 1rem 1rem .75rem;
-      background: rgba(255,255,255,.04);
-      border-bottom: 1px solid rgba(255,255,255,.07);
-    }
-    .featured-emoji { font-size: 2.2rem; flex-shrink: 0; }
-    .featured-meta  { flex: 1; min-width: 0; }
-    .featured-name  { font-size: 1rem; font-weight: 700; margin-bottom: .35rem; }
-    .featured-badges { display: flex; flex-wrap: wrap; gap: .3rem; }
-
-    .type-badge, .tag-badge {
-      font-size: .65rem; font-weight: 700;
-      padding: .15rem .5rem;
-      border-radius: 999px;
-    }
-    .type-badge { background: rgba(124,58,237,.3); border: 1px solid rgba(167,139,250,.4); color: #c4b5fd; }
-    .tag-badge  { background: rgba(6,182,212,.2);  border: 1px solid rgba(6,182,212,.35); color: #67e8f9; }
-
-    .risk-badge {
-      font-size: .65rem; font-weight: 700;
-      padding: .15rem .5rem;
-      border-radius: 999px;
-    }
-    .risk-badge.risk-高 { background: rgba(255,77,109,.2);  border: 1px solid rgba(255,77,109,.4);  color: #ff4d6d; }
-    .risk-badge.risk-中 { background: rgba(251,191,36,.15); border: 1px solid rgba(251,191,36,.35); color: #fbbf24; }
-    .risk-badge.risk-低 { background: rgba(0,255,163,.12);  border: 1px solid rgba(0,255,163,.3);   color: #00ffa3; }
-
-    .featured-section { padding: .8rem 1rem; border-bottom: 1px solid rgba(255,255,255,.05); }
-    .featured-section:last-child { border-bottom: none; }
-    .featured-section-title {
-      font-size: .72rem; font-weight: 700; letter-spacing: .06em;
-      color: var(--muted); margin-bottom: .4rem;
-    }
-    .featured-body { font-size: .88rem; line-height: 1.75; color: var(--text); }
-    .featured-body.outlook { color: #a5f3fc; }
-
-    /* ── APIキー未設定通知 ──────────────────────────────────────── */
-    .no-api-notice {
-      display: flex; align-items: flex-start; gap: 1rem;
-      padding: 1.25rem 1.5rem;
-      background: rgba(251,191,36,.06);
-      border: 1px dashed rgba(251,191,36,.35);
-      border-radius: var(--radius);
-      color: var(--muted);
-    }
-    .no-api-icon { font-size: 1.8rem; flex-shrink: 0; }
-    .no-api-title { font-weight: 700; color: #fbbf24; margin-bottom: .3rem; }
-    .no-api-body  { font-size: .88rem; line-height: 1.7; }
-    .no-api-body code {
-      background: rgba(255,255,255,.1); padding: .1rem .4rem;
-      border-radius: 4px; font-family: monospace; color: #a78bfa;
-    }
-
-    /* ── スクロールバー ──────────────────────────────────────────── */
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: var(--bg0); }
-    ::-webkit-scrollbar-thumb { background: rgba(167,139,250,.4); border-radius: 3px; }
+    [x-cloak] { display:none !important; }
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:var(--bg0); }
+    ::-webkit-scrollbar-thumb { background:rgba(167,139,250,.4); border-radius:3px; }
   </style>
 </head>
 
-<body x-data="{
-  modal: false,
-  current: {},
-  open(item) { this.current = item; this.modal = true; document.body.style.overflow='hidden'; },
-  close()    { this.modal = false; document.body.style.overflow=''; }
-}">
+<body>
 
-<!-- ████████████████████  HEADER  ████████████████████ -->
+<!-- ████  HEADER  ████ -->
 <header>
-  <div class="site-title">🌍 世界の株式市場ニュース</div>
-  <div class="subtitle">World Stock Market Dashboard</div>
+  <div class="site-title">🌍 世界の株式市場ダッシュボード</div>
   <div class="update-badge">
-    <span class="pulse-dot"></span>
-    🕐 最終更新: {{ updated_at }}
+    <span class="pulse-dot"></span>🕐 最終更新: {{ updated_at }}
   </div>
 </header>
 
-<!-- ████████████████████  TICKER BAR  ████████████████████ -->
+<!-- ████  市場タイマー  ████ -->
+<div class="timer-bar" id="timerBar">
+  <div class="timer-clock" id="clockDisplay">--:--:--</div>
+  <div class="market-status">
+    <span class="status-badge" id="statusBadge">読み込み中...</span>
+    <span class="countdown" id="countdownDisplay"></span>
+  </div>
+</div>
+
+<!-- ████  TICKER BAR  ████ -->
 <div class="ticker-wrap">
   <div class="ticker-track">
     {% set all_tickers = prices.indices + prices.crypto + prices.commodities %}
@@ -534,117 +287,251 @@
     <span class="ticker-item {{ item.direction if item.price else 'flat' }}">
       {{ item.emoji }} {{ item.name }}
       {% if item.price %}
-        {% if item.price >= 1000 %}
-          ${{ "{:,.0f}".format(item.price) }}
-        {% elif item.price >= 1 %}
-          ${{ "{:.2f}".format(item.price) }}
-        {% else %}
-          ${{ "{:.4f}".format(item.price) }}
-        {% endif %}
-        {{ item.arrow }} {{ "{:+.2f}".format(item.change_pct) }}%
-      {% else %}
-        ―
-      {% endif %}
+        {% if item.price >= 1000 %}${{ "{:,.0f}".format(item.price) }}
+        {% elif item.price >= 1   %}${{ "{:.2f}".format(item.price) }}
+        {% else                   %}${{ "{:.4f}".format(item.price) }}{% endif %}
+        {{ item.arrow }}{{ "{:+.2f}".format(item.change_pct) }}%
+      {% else %}―{% endif %}
     </span>
     {% endfor %}
   </div>
 </div>
 
-<!-- ████████████████████  主要指数  ████████████████████ -->
+<!-- ████  寄り付き前チェック  ████ -->
 <div class="section">
-  <div class="section-title">📊 主要株価指数</div>
-  <div class="index-grid">
+  <div class="section-title">🌅 寄り付き前チェック</div>
+  <div class="premarket-grid">
+    {% for pm in prices.premarket %}
+    <div class="premarket-card">
+      <div class="pm-emoji">{{ pm.emoji }}</div>
+      <div class="pm-name">{{ pm.name }}</div>
+      {% if pm.price %}
+      <div class="pm-price {{ pm.direction }}">
+        {% if pm.price >= 100 %}{{ "{:,.2f}".format(pm.price) }}
+        {% else               %}{{ "{:.3f}".format(pm.price) }}{% endif %}
+      </div>
+      <div class="pm-pct {{ pm.direction }}">{{ pm.arrow }} {{ "{:+.2f}".format(pm.change_pct) }}%</div>
+      {% else %}<div class="pm-price flat">―</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ████  主要指数（コンパクト）  ████ -->
+<div class="section">
+  <div class="section-title">📊 主要指数</div>
+  <div class="compact-row">
     {% for idx in prices.indices %}
-    <div class="index-card glass">
-      <div class="idx-emoji">{{ idx.emoji }}</div>
-      <div class="idx-name">{{ idx.name }}</div>
+    <div class="compact-chip {{ idx.direction if idx.price else 'flat' }}">
+      <span>{{ idx.emoji }}</span>
+      <span class="chip-name">{{ idx.name }}</span>
       {% if idx.price %}
-      <div class="idx-price">
-        {% if idx.price >= 1000 %}{{ "{:,.2f}".format(idx.price) }}
-        {% else %}{{ "{:.2f}".format(idx.price) }}{% endif %}
-      </div>
-      <div class="idx-pct {{ idx.direction }}">
-        {{ idx.arrow }} {{ "{:+.2f}".format(idx.change_pct) }}%
-      </div>
-      {% else %}
-      <div class="idx-price flat">―</div>
-      {% endif %}
+      <span class="chip-price">
+        {% if idx.price >= 1000 %}{{ "{:,.0f}".format(idx.price) }}
+        {% else                  %}{{ "{:.2f}".format(idx.price) }}{% endif %}
+      </span>
+      <span class="chip-pct">{{ idx.arrow }}{{ "{:+.2f}".format(idx.change_pct) }}%</span>
+      {% else %}<span class="flat">―</span>{% endif %}
     </div>
     {% endfor %}
   </div>
 </div>
 
-<!-- ████████████████████  仮想通貨  ████████████████████ -->
+<div class="divider"></div>
+
+<!-- ████  仮想通貨 & コモディティ（コンパクト）  ████ -->
 <div class="section">
-  <div class="section-title">🪙 仮想通貨 / Crypto</div>
-  <div class="crypto-grid">
+  <div class="section-title">🪙 仮想通貨 &nbsp;|&nbsp; 🏅 コモディティ</div>
+  <div class="compact-row">
     {% for c in prices.crypto %}
-    <div class="crypto-card">
-      <div class="c-symbol">{{ c.emoji }}</div>
-      <div class="c-name">{{ c.name }}</div>
+    <div class="compact-chip {{ c.direction if c.price else 'flat' }}">
+      <span>{{ c.emoji }}</span>
+      <span class="chip-name">{{ c.name }}</span>
       {% if c.price %}
-      <div class="c-price">
+      <span class="chip-price">
         {% if c.price >= 1000 %}${{ "{:,.0f}".format(c.price) }}
-        {% elif c.price >= 1 %}${{ "{:.2f}".format(c.price) }}
-        {% else %}${{ "{:.4f}".format(c.price) }}{% endif %}
-      </div>
-      <div class="c-pct {{ c.direction }}">{{ c.arrow }} {{ "{:+.2f}".format(c.change_pct) }}%</div>
-      {% else %}
-      <div class="c-price flat">―</div>
-      {% endif %}
+        {% else                %}${{ "{:.2f}".format(c.price) }}{% endif %}
+      </span>
+      <span class="chip-pct">{{ c.arrow }}{{ "{:+.2f}".format(c.change_pct) }}%</span>
+      {% else %}<span class="flat">―</span>{% endif %}
     </div>
     {% endfor %}
-  </div>
-</div>
-
-<!-- ████████████████████  コモディティ  ████████████████████ -->
-<div class="section">
-  <div class="section-title">🏅 コモディティ / Commodities</div>
-  <div class="commodity-grid">
     {% for m in prices.commodities %}
-    <div class="commodity-card">
-      <div class="m-emoji">{{ m.emoji }}</div>
-      <div class="m-name">{{ m.name }}</div>
+    <div class="compact-chip {{ m.direction if m.price else 'flat' }}">
+      <span>{{ m.emoji }}</span>
+      <span class="chip-name">{{ m.name }}</span>
       {% if m.price %}
-      <div class="m-price">
-        {% if m.price >= 1000 %}${{ "{:,.2f}".format(m.price) }}
-        {% else %}${{ "{:.3f}".format(m.price) }}{% endif %}
-      </div>
-      <div class="m-pct {{ m.direction }}">{{ m.arrow }} {{ "{:+.2f}".format(m.change_pct) }}%</div>
-      <div class="m-unit">{{ m.unit }}</div>
-      {% else %}
-      <div class="m-price flat">―</div>
-      {% endif %}
+      <span class="chip-price">
+        {% if m.price >= 100 %}${{ "{:,.1f}".format(m.price) }}
+        {% else               %}${{ "{:.2f}".format(m.price) }}{% endif %}
+      </span>
+      <span class="chip-pct">{{ m.arrow }}{{ "{:+.2f}".format(m.change_pct) }}%</span>
+      {% else %}<span class="flat">―</span>{% endif %}
     </div>
     {% endfor %}
   </div>
 </div>
 
-<!-- ████████████████████  セクター  ████████████████████ -->
+<div class="divider"></div>
+
+<!-- ████  セクター別動向  ████ -->
 <div class="section">
   <div class="section-title">🏢 セクター別動向 (米国ETF)</div>
   <div class="sector-grid">
     {% for s in prices.sectors %}
     <span class="sector-pill {{ s.direction if s.price else 'flat' }}">
       {{ s.emoji }} {{ s.name }}
-      {% if s.price %}
-        {{ s.arrow }} {{ "{:+.2f}".format(s.change_pct) }}%
-      {% else %}
-        ―
-      {% endif %}
+      {% if s.price %}{{ s.arrow }}{{ "{:+.2f}".format(s.change_pct) }}%{% else %}―{% endif %}
     </span>
     {% endfor %}
   </div>
 </div>
 
-<div class="divider" style="max-width:1400px;margin:0 auto;"></div>
+<div class="divider"></div>
 
-<!-- ████████████████████  市場解説  ████████████████████ -->
+<!-- ████  為替感応度マップ  ████ -->
+<div class="section">
+  {% set usdjpy = prices.premarket | selectattr("ticker","equalto","JPY=X") | list %}
+  {% set fx = usdjpy[0] if usdjpy else {} %}
+  <div class="section-title">
+    💱 為替感応度マップ
+    {% if fx.price %}
+    <span class="fx-indicator {{ fx.direction }}">
+      {{ fx.emoji }} {{ "{:,.2f}".format(fx.price) }}円
+      {{ fx.arrow }}{{ "{:+.2f}".format(fx.change_pct) }}%
+    </span>
+    {% endif %}
+  </div>
+  <div class="fx-map">
+    <div class="fx-card weak-yen">
+      <div class="fx-card-title">📉 円安メリット（輸出・グローバル）</div>
+      <span class="fx-tag fx-up">🚗 自動車（トヨタ・ホンダ）</span>
+      <span class="fx-tag fx-up">📱 電機・精密（ソニー・キヤノン）</span>
+      <span class="fx-tag fx-up">⚙️ 機械（ファナック・コマツ）</span>
+      <span class="fx-tag fx-up">🎮 ゲーム（任天堂）</span>
+      <span class="fx-tag fx-up">💊 製薬（武田・中外）</span>
+    </div>
+    <div class="fx-card strong-yen">
+      <div class="fx-card-title">📈 円高メリット（内需・輸入）</div>
+      <span class="fx-tag fx-down">🛒 内需小売（ファストリ・イオン）</span>
+      <span class="fx-tag fx-down">🏠 不動産・建設</span>
+      <span class="fx-tag fx-down">🍜 食品・外食</span>
+      <span class="fx-tag fx-down">✈️ 航空・旅行（JAL・ANA）</span>
+      <span class="fx-tag fx-down">🔌 電力・ガス</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ████  値上がり・値下がりランキング  ████ -->
+<div class="section">
+  <div class="section-title">📈 日本株 前日比ランキング</div>
+  <div class="ranking-grid">
+    <div class="ranking-list">
+      <div class="ranking-header up-head">🚀 値上がりTOP5</div>
+      <div class="ranking-body up-body">
+        {% for s in prices.gainers %}
+        <div class="ranking-row">
+          <span class="rank-num">{{ loop.index }}</span>
+          <span class="rank-name">{{ s.name }}</span>
+          <span class="rank-pct up">▲ {{ "{:+.2f}".format(s.change_pct) }}%</span>
+        </div>
+        {% else %}
+        <div class="ranking-row"><span style="color:var(--muted);font-size:.82rem;">データなし</span></div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="ranking-list">
+      <div class="ranking-header down-head">💥 値下がりTOP5</div>
+      <div class="ranking-body down-body">
+        {% for s in prices.losers %}
+        <div class="ranking-row">
+          <span class="rank-num">{{ loop.index }}</span>
+          <span class="rank-name">{{ s.name }}</span>
+          <span class="rank-pct down">▼ {{ "{:.2f}".format(s.change_pct | abs) }}%</span>
+        </div>
+        {% else %}
+        <div class="ranking-row"><span style="color:var(--muted);font-size:.82rem;">データなし</span></div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- ████  個人ウォッチリスト  ████ -->
+<div class="section">
+  <div class="section-title">👀 個人ウォッチリスト <span class="ai-badge">✨ AI評価</span></div>
+  {% if watchlist_analysis %}
+  <div class="watchlist-grid">
+    {% for w in watchlist_analysis %}
+    <div class="watch-card">
+      <div class="watch-header">
+        <span class="watch-emoji">{{ w.emoji }}</span>
+        <div class="watch-info">
+          <div class="watch-name">
+            {{ w.name }}
+            <span class="rating-badge r-{{ w.rating }}">{{ w.rating }}</span>
+          </div>
+          <div class="watch-sector">{{ w.get("sector","") if w.get("sector") else w.ticker }}</div>
+        </div>
+        <div class="watch-price-block">
+          {% if w.price %}
+          <div class="watch-price {{ w.direction }}">{{ "{:,.1f}".format(w.price) }}円</div>
+          <div class="watch-pct {{ w.direction }}">{{ w.arrow }} {{ "{:+.2f}".format(w.change_pct) }}%</div>
+          {% endif %}
+        </div>
+      </div>
+      {% if w.score %}
+      <div class="score-bar-wrap">
+        <div class="score-label">
+          <span>強気スコア</span>
+          <span style="font-weight:700;color:var(--text)">{{ w.score }}/10</span>
+        </div>
+        <div class="score-bar">
+          <div class="score-fill" style="width:{{ w.score * 10 }}%;background:{% if w.score >= 7 %}var(--up){% elif w.score >= 4 %}#fbbf24{% else %}var(--down){% endif %}"></div>
+        </div>
+      </div>
+      {% endif %}
+      <div class="watch-body">
+        <div class="watch-reason">{{ w.reason }}</div>
+        {% if w.points %}
+        <ul class="watch-points">
+          {% for pt in w.points %}<li>{{ pt }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        {% if w.caution %}
+        <div class="watch-caution">⚠️ {{ w.caution }}</div>
+        {% endif %}
+        {% if w.entry_hint %}
+        <div class="watch-entry">💡 {{ w.entry_hint }}</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="no-api-notice">
+    <span class="no-api-icon">🔑</span>
+    <div>
+      <div class="no-api-title">AI評価を有効にするには</div>
+      <div class="no-api-body"><code>ANTHROPIC_API_KEY</code> をGitHub Secretsに登録してください。</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="divider"></div>
+
+<!-- ████  市場解説  ████ -->
 <div class="section">
   <div class="section-title">🧠 本日の市場解説 <span class="ai-badge">✨ AI Analysis</span></div>
   {% if commentary and (commentary.overview or commentary.drivers or commentary.global_trends) %}
   <div class="commentary-grid">
-
     {% if commentary.overview %}
     <div class="commentary-card overview-card">
       <div class="commentary-icon">📊</div>
@@ -652,7 +539,6 @@
       <div class="commentary-text">{{ commentary.overview }}</div>
     </div>
     {% endif %}
-
     {% if commentary.drivers %}
     <div class="commentary-card drivers-card">
       <div class="commentary-icon">🔍</div>
@@ -660,7 +546,6 @@
       <div class="commentary-text">{{ commentary.drivers }}</div>
     </div>
     {% endif %}
-
     {% if commentary.global_trends %}
     <div class="commentary-card trends-card">
       <div class="commentary-icon">🌐</div>
@@ -668,22 +553,21 @@
       <div class="commentary-text">{{ commentary.global_trends }}</div>
     </div>
     {% endif %}
-
   </div>
   {% else %}
   <div class="no-api-notice">
     <span class="no-api-icon">🔑</span>
     <div>
       <div class="no-api-title">AI解説を有効にするには</div>
-      <div class="no-api-body">GitHub リポジトリの Settings → Secrets → Actions に <code>ANTHROPIC_API_KEY</code> を登録してください。登録後にワークフローを再実行すると、Claudeによる市場解説が表示されます。</div>
+      <div class="no-api-body">GitHub Secrets に <code>ANTHROPIC_API_KEY</code> を登録後、ワークフローを再実行してください。</div>
     </div>
   </div>
   {% endif %}
 </div>
 
-<div class="divider" style="max-width:1400px;margin:0 auto;"></div>
+<div class="divider"></div>
 
-<!-- ████████████████████  注目銘柄特集  ████████████████████ -->
+<!-- ████  注目銘柄特集  ████ -->
 <div class="section">
   <div class="section-title">🔥 本日の注目銘柄・業界特集 <span class="ai-badge">✨ AI Picks</span></div>
   {% if featured %}
@@ -692,7 +576,7 @@
     <div class="featured-card risk-{{ pick.risk }}">
       <div class="featured-header">
         <span class="featured-emoji">{{ pick.emoji }}</span>
-        <div class="featured-meta">
+        <div>
           <div class="featured-name">{{ pick.name }}</div>
           <div class="featured-badges">
             <span class="type-badge">{{ pick.type }}</span>
@@ -701,12 +585,10 @@
           </div>
         </div>
       </div>
-
       <div class="featured-section">
         <div class="featured-section-title">💡 注目理由</div>
         <div class="featured-body">{{ pick.reason }}</div>
       </div>
-
       <div class="featured-section">
         <div class="featured-section-title">🔭 今後の見通し</div>
         <div class="featured-body outlook">{{ pick.outlook }}</div>
@@ -719,152 +601,78 @@
     <span class="no-api-icon">🔑</span>
     <div>
       <div class="no-api-title">AI注目銘柄を有効にするには</div>
-      <div class="no-api-body">GitHub リポジトリの Settings → Secrets → Actions に <code>ANTHROPIC_API_KEY</code> を登録してください。登録後にワークフローを再実行すると、Claudeによる注目銘柄・業界特集が表示されます。</div>
+      <div class="no-api-body">GitHub Secrets に <code>ANTHROPIC_API_KEY</code> を登録後、ワークフローを再実行してください。</div>
     </div>
   </div>
   {% endif %}
 </div>
 
-<div class="divider" style="max-width:1400px;margin:0 auto;"></div>
-
-<!-- ████████████████████  ニュース  ████████████████████ -->
-<div class="section">
-  <div class="section-title">📰 最新ニュース</div>
-  <div class="news-grid">
-
-    <!-- 🗾 日本市場 -->
-    <div>
-      <div class="news-column-title jp">🗾 日本市場</div>
-      <div class="news-list jp" style="background: rgba(236,72,153,.04);">
-        {% if jp_items %}
-          {% for item in jp_items[:12] %}
-          {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
-          <div class="news-card"
-            @click="open({
-              emoji: '{{ icons[loop.index0 % icons|length] }}',
-              title: {{ item.title_ja | tojson }},
-              original: {{ item.title | tojson }},
-              summary: {{ item.summary_ja | tojson }},
-              link: {{ item.link | tojson }},
-              date: {{ item.pubDate | tojson }}
-            })">
-            <span class="news-icon">{{ icons[loop.index0 % icons|length] }}</span>
-            <div class="news-body">
-              <div class="news-title">{{ item.title_ja }}</div>
-              <div class="news-date">{{ item.pubDate }}</div>
-            </div>
-            <span class="news-arrow">›</span>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div style="padding:1.5rem;text-align:center;color:var(--muted);">😴 ニュースなし</div>
-        {% endif %}
-      </div>
-    </div>
-
-    <!-- 🇺🇸 米国市場 -->
-    <div>
-      <div class="news-column-title us">🇺🇸 米国市場</div>
-      <div class="news-list us" style="background: rgba(6,182,212,.04);">
-        {% if us_items %}
-          {% for item in us_items[:12] %}
-          {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
-          <div class="news-card"
-            @click="open({
-              emoji: '{{ icons[loop.index0 % icons|length] }}',
-              title: {{ item.title_ja | tojson }},
-              original: {{ item.title | tojson }},
-              summary: {{ item.summary_ja | tojson }},
-              link: {{ item.link | tojson }},
-              date: {{ item.pubDate | tojson }}
-            })">
-            <span class="news-icon">{{ icons[loop.index0 % icons|length] }}</span>
-            <div class="news-body">
-              <div class="news-title">{{ item.title_ja }}</div>
-              <div class="news-date">{{ item.pubDate }}</div>
-            </div>
-            <span class="news-arrow">›</span>
-          </div>
-          {% endfor %}
-        {% else %}
-          <div style="padding:1.5rem;text-align:center;color:var(--muted);">😴 ニュースなし</div>
-        {% endif %}
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- ████████████████████  モーダル  ████████████████████ -->
-<div class="modal-overlay"
-  x-show="modal"
-  x-cloak
-  @click.self="close()"
-  x-transition:enter="transition ease-out duration-200"
-  x-transition:enter-start="opacity-0"
-  x-transition:enter-end="opacity-100"
-  x-transition:leave="transition ease-in duration-150"
-  x-transition:leave-start="opacity-100"
-  x-transition:leave-end="opacity-0">
-
-  <div class="modal-box"
-    x-transition:enter="transition ease-out duration-250"
-    x-transition:enter-start="opacity-0 scale-90"
-    x-transition:enter-end="opacity-100 scale-100"
-    x-transition:leave="transition ease-in duration-150"
-    x-transition:leave-start="opacity-100 scale-100"
-    x-transition:leave-end="opacity-0 scale-95"
-    style="transform-origin: center;">
-
-    <div class="modal-header">
-      <span class="m-emoji" x-text="current.emoji"></span>
-      <div class="m-title" x-text="current.title"></div>
-      <button class="modal-close" @click="close()">✕</button>
-    </div>
-
-    <div class="modal-body">
-      <template x-if="current.original && current.original !== current.title">
-        <div class="modal-original">
-          🔤 原文: <span x-text="current.original"></span>
-        </div>
-      </template>
-      <div class="modal-summary" x-text="current.summary || '詳細情報はリンク先をご覧ください。'"></div>
-      <template x-if="current.date">
-        <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted);">
-          🕐 <span x-text="current.date"></span>
-        </div>
-      </template>
-    </div>
-
-    <div class="modal-footer">
-      <template x-if="current.link">
-        <a class="modal-link" :href="current.link" target="_blank" rel="noopener">
-          元記事を読む 🔗
-        </a>
-      </template>
-    </div>
-
-  </div>
-</div>
-
-<!-- ████████████████████  FOOTER  ████████████████████ -->
+<!-- ████  FOOTER  ████ -->
 <footer>
-  <p>🤖 このページは <strong>GitHub Actions</strong> + <strong>Claude AI</strong> により自動生成されます</p>
-  <p style="margin-top:.4rem;">
-    データ取得: Yahoo Finance / Reuters RSS |
-    価格: <a href="https://finance.yahoo.com" target="_blank">yfinance</a> |
-    翻訳: <a href="https://anthropic.com" target="_blank">Anthropic Claude</a>
-  </p>
-  <p style="margin-top:.4rem; font-size:.7rem;">※ 投資判断の参考情報です。正確性・完全性を保証するものではありません。</p>
+  <p>🤖 <strong>GitHub Actions</strong> + <strong>Claude AI</strong> で自動生成 | データ: Yahoo Finance / yfinance | 翻訳・解説: <a href="https://anthropic.com" target="_blank">Anthropic Claude</a></p>
+  <p style="margin-top:.35rem;font-size:.68rem;">※ 本ページは情報提供のみを目的としています。投資判断は自己責任でお願いします。</p>
 </footer>
 
-<!-- ESCキーでモーダルを閉じる -->
+<!-- ████  市場タイマー JS  ████ -->
 <script>
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      document.body.__x && document.body.__x.$data.close();
+(function() {
+  const SESSIONS = [
+    { name: "前場",   start: [9,0],  end: [11,30], cls: "status-open",   icon: "🟢" },
+    { name: "昼休み", start: [11,30],end: [12,30], cls: "status-lunch",  icon: "🍱" },
+    { name: "後場",   start: [12,30],end: [15,30], cls: "status-open",   icon: "🟢" },
+  ];
+
+  function toMinutes(h, m) { return h * 60 + m; }
+
+  function update() {
+    const now = new Date();
+    const jst = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Tokyo" }));
+    const h = jst.getHours(), m = jst.getMinutes(), s = jst.getSeconds();
+    const cur = toMinutes(h, m);
+    const pad = n => String(n).padStart(2, "0");
+
+    document.getElementById("clockDisplay").textContent =
+      `${pad(h)}:${pad(m)}:${pad(s)} JST`;
+
+    let badge = document.getElementById("statusBadge");
+    let countdown = document.getElementById("countdownDisplay");
+    let found = false;
+
+    for (const ses of SESSIONS) {
+      const st = toMinutes(...ses.start), en = toMinutes(...ses.end);
+      if (cur >= st && cur < en) {
+        badge.className = "status-badge " + ses.cls;
+        badge.textContent = ses.icon + " " + ses.name + " 取引中";
+        const rem = en - cur - 1;
+        const remH = Math.floor(rem / 60), remM = rem % 60;
+        countdown.textContent = `終了まで ${remH > 0 ? remH + "時間" : ""}${remM}分`;
+        found = true; break;
+      }
     }
-  });
+    if (!found) {
+      // 次のセッションを探す
+      let next = null;
+      for (const ses of SESSIONS) {
+        const st = toMinutes(...ses.start);
+        if (st > cur) { next = ses; break; }
+      }
+      if (next) {
+        badge.className = "status-badge status-pre";
+        badge.textContent = "⏳ 次: " + next.name;
+        const diff = toMinutes(...next.start) - cur;
+        const dH = Math.floor(diff / 60), dM = diff % 60;
+        countdown.textContent = `開始まで ${dH > 0 ? dH + "時間" : ""}${dM}分`;
+      } else {
+        badge.className = "status-badge status-closed";
+        badge.textContent = "🔴 クローズ";
+        countdown.textContent = "次回: 翌営業日 09:00 JST";
+      }
+    }
+  }
+
+  update();
+  setInterval(update, 1000);
+})();
 </script>
 
 </body>
