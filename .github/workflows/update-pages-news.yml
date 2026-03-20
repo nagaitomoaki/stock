@@ -9,11 +9,20 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
 
     steps:
       - name: ⬇️ Checkout
@@ -31,13 +40,13 @@ jobs:
       - name: 🏗️ Build HTML page
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python scripts/build_page.py --output docs/index.html
+        run: python scripts/build_page.py --output _site/index.html
 
-      - name: 🚀 Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: 📤 Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
-          publish_branch: gh-pages
-          force_orphan: true
-          commit_message: "🤖 Update market news [$(date -u '+%Y-%m-%d %H:%M UTC')]"
+          path: _site
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
