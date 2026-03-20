@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌍 世界の株式市場ニュース</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Alpine.js (モーダル制御) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    /* ── リセット & ベース ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg0:      #0a0a1a;
+      --bg1:      #11112a;
+      --bg2:      #1a1a3a;
+      --glass:    rgba(255,255,255,0.06);
+      --glass-b:  rgba(255,255,255,0.12);
+      --up:       #00ffa3;
+      --down:     #ff4d6d;
+      --flat:     #aaaacc;
+      --accent1:  #7c3aed;
+      --accent2:  #ec4899;
+      --accent3:  #06b6d4;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --radius:   16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      background: var(--bg0);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── アニメーション背景 ─────────────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%,  rgba(124,58,237,.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%,  rgba(6,182,212,.25)  0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50%  50%,  rgba(236,72,153,.12) 0%, transparent 70%);
+      animation: bgPulse 12s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      0%   { opacity: .8; }
+      100% { opacity: 1;  }
+    }
+
+    /* ── ユーティリティ ─────────────────────────────────────────── */
+    .up   { color: var(--up);   }
+    .down { color: var(--down); }
+    .flat { color: var(--flat); }
+
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+    }
+
+    /* ── ヘッダー ────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+      position: relative;
+    }
+    .site-title {
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      text-shadow: none;
+      animation: titleGlow 4s ease-in-out infinite alternate;
+    }
+    @keyframes titleGlow {
+      from { filter: drop-shadow(0 0 20px rgba(167,139,250,.4)); }
+      to   { filter: drop-shadow(0 0 40px rgba(236,72,153,.5)); }
+    }
+    .subtitle {
+      margin-top: .5rem;
+      font-size: .95rem;
+      color: var(--muted);
+    }
+    .update-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      margin-top: 1rem;
+      padding: .35rem 1rem;
+      background: rgba(6,182,212,.15);
+      border: 1px solid rgba(6,182,212,.3);
+      border-radius: 999px;
+      font-size: .8rem;
+      color: var(--accent3);
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent3);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1);   }
+      50%      { opacity: .4; transform: scale(1.5); }
+    }
+
+    /* ── セクション共通 ─────────────────────────────────────────── */
+    .section { padding: 1.5rem 1rem; max-width: 1400px; margin: 0 auto; }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+
+    /* ── 価格ティッカーバー ─────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: rgba(255,255,255,.04);
+      border-top: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: .6rem 0;
+      white-space: nowrap;
+    }
+    .ticker-track {
+      display: inline-flex; gap: 2.5rem;
+      animation: tickerScroll 40s linear infinite;
+    }
+    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .85rem; font-weight: 700;
+    }
+
+    /* ── 指数カード ─────────────────────────────────────────────── */
+    .index-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .index-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .index-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(124,58,237,.25);
+    }
+    .index-card .idx-emoji { font-size: 1.8rem; }
+    .index-card .idx-name  { font-size: .8rem; color: var(--muted); margin: .25rem 0; }
+    .index-card .idx-price { font-size: 1.1rem; font-weight: 700; }
+    .index-card .idx-pct   { font-size: .85rem; font-weight: 700; margin-top: .2rem; }
+
+    /* ── 仮想通貨 ───────────────────────────────────────────────── */
+    .crypto-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .crypto-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.1));
+      border: 1px solid rgba(167,139,250,.25);
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .crypto-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(167,139,250,.6);
+    }
+    .crypto-card .c-symbol { font-size: 2rem; }
+    .crypto-card .c-name   { font-size: .75rem; color: var(--muted); }
+    .crypto-card .c-price  { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
+    .crypto-card .c-pct    { font-size: .85rem; font-weight: 700; }
+
+    /* ── コモディティ ────────────────────────────────────────────── */
+    .commodity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .commodity-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(16,185,129,.08));
+      border: 1px solid rgba(6,182,212,.2);
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .commodity-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(6,182,212,.5);
+    }
+    .commodity-card .m-emoji { font-size: 2rem; }
+    .commodity-card .m-name  { font-size: .75rem; color: var(--muted); }
+    .commodity-card .m-price { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
+    .commodity-card .m-pct   { font-size: .85rem; font-weight: 700; }
+    .commodity-card .m-unit  { font-size: .65rem; color: var(--muted); }
+
+    /* ── セクター ───────────────────────────────────────────────── */
+    .sector-grid {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+    }
+    .sector-pill {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .5rem 1rem;
+      border-radius: 999px;
+      font-size: .85rem; font-weight: 700;
+      transition: transform .15s;
+      cursor: default;
+    }
+    .sector-pill:hover { transform: scale(1.06); }
+    .sector-pill.up   { background: rgba(0,255,163,.12); border: 1px solid rgba(0,255,163,.3); color: var(--up); }
+    .sector-pill.down { background: rgba(255,77,109,.12); border: 1px solid rgba(255,77,109,.3); color: var(--down); }
+    .sector-pill.flat { background: rgba(170,170,204,.08); border: 1px solid rgba(170,170,204,.2); color: var(--flat); }
+
+    /* ── ニュースグリッド ────────────────────────────────────────── */
+    .news-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
+
+    .news-column-title {
+      font-size: 1.1rem; font-weight: 700;
+      padding: .75rem 1rem;
+      border-radius: var(--radius) var(--radius) 0 0;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .news-column-title.jp {
+      background: linear-gradient(90deg, rgba(236,72,153,.3), rgba(124,58,237,.2));
+      border: 1px solid rgba(236,72,153,.3); border-bottom: none;
+    }
+    .news-column-title.us {
+      background: linear-gradient(90deg, rgba(6,182,212,.3), rgba(59,130,246,.2));
+      border: 1px solid rgba(6,182,212,.3); border-bottom: none;
+    }
+
+    .news-list {
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+    .news-list.jp { border: 1px solid rgba(236,72,153,.25); border-top: none; }
+    .news-list.us { border: 1px solid rgba(6,182,212,.25);  border-top: none; }
+
+    /* ── ニュースカード ─────────────────────────────────────────── */
+    .news-card {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .9rem 1rem;
+      cursor: pointer;
+      transition: background .2s;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .news-card:last-child { border-bottom: none; }
+    .news-card:hover { background: rgba(255,255,255,.07); }
+    .news-card .news-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .news-card .news-body { flex: 1; min-width: 0; }
+    .news-card .news-title {
+      font-size: .9rem; font-weight: 700;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .news-card .news-date {
+      font-size: .72rem; color: var(--muted);
+      margin-top: .3rem;
+    }
+    .news-card .news-arrow {
+      color: var(--muted); font-size: .9rem;
+      flex-shrink: 0; align-self: center;
+    }
+
+    /* ── モーダル ────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      width: 100%; max-width: 560px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #1a1a3a, #11112a);
+      border: 1px solid rgba(167,139,250,.3);
+      box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 60px rgba(124,58,237,.2);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem .75rem;
+      background: linear-gradient(90deg, rgba(124,58,237,.2), rgba(236,72,153,.15));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: flex-start; gap: .75rem;
+    }
+    .modal-header .m-emoji { font-size: 1.8rem; flex-shrink: 0; }
+    .modal-header .m-title { font-size: 1rem; font-weight: 700; line-height: 1.45; flex: 1; }
+    .modal-close {
+      background: rgba(255,255,255,.1); border: none; cursor: pointer;
+      color: var(--text); font-size: 1.2rem;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.2); }
+    .modal-body { padding: 1.25rem 1.5rem; }
+    .modal-original {
+      font-size: .78rem; color: var(--muted);
+      margin-bottom: .75rem;
+      padding: .5rem .75rem;
+      background: rgba(255,255,255,.04);
+      border-radius: 8px;
+      border-left: 3px solid rgba(167,139,250,.4);
+    }
+    .modal-summary {
+      font-size: .95rem; line-height: 1.7;
+      color: var(--text);
+    }
+    .modal-footer {
+      padding: .75rem 1.5rem 1.25rem;
+      display: flex; justify-content: flex-end;
+    }
+    .modal-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-radius: 999px;
+      color: #fff; font-weight: 700; font-size: .85rem;
+      text-decoration: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .modal-link:hover { opacity: .85; transform: scale(1.04); }
+
+    /* モーダルアニメーション */
+    [x-cloak] { display: none !important; }
+    .modal-overlay {
+      transition: opacity .2s;
+    }
+    .modal-box {
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+    }
+
+    /* ── フッター ────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: .78rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,.07);
+      margin-top: 2rem;
+    }
+    footer a { color: var(--accent3); text-decoration: none; }
+
+    /* ── セパレーター ────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(167,139,250,.3), transparent);
+      margin: .5rem 0;
+    }
+
+    /* ── スクロールバー ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg0); }
+    ::-webkit-scrollbar-thumb { background: rgba(167,139,250,.4); border-radius: 3px; }
+  </style>
+</head>
+
+<body x-data="{
+  modal: false,
+  current: {},
+  open(item) { this.current = item; this.modal = true; document.body.style.overflow='hidden'; },
+  close()    { this.modal = false; document.body.style.overflow=''; }
+}">
+
+<!-- ████████████████████  HEADER  ████████████████████ -->
+<header>
+  <div class="site-title">🌍 世界の株式市場ニュース</div>
+  <div class="subtitle">World Stock Market Dashboard</div>
+  <div class="update-badge">
+    <span class="pulse-dot"></span>
+    🕐 最終更新: 2026年03月20日 13:58 JST
+  </div>
+</header>
+
+<!-- ████████████████████  TICKER BAR  ████████████████████ -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    
+    
+    <span class="ticker-item down">
+      🗾 日経225
+      
+        
+          $53,373
+        
+        ▼ -3.29%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      🇺🇸 S&P 500
+      
+        
+          $6,606
+        
+        ▼ -0.27%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      📈 NYダウ
+      
+        
+          $46,021
+        
+        ▼ -0.44%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      💡 NASDAQ
+      
+        
+          $22,091
+        
+        ▼ -0.28%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      🇭🇰 香港ハンセン
+      
+        
+          $25,340
+        
+        ▼ -0.63%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ₿ Bitcoin
+      
+        
+          $70,779
+        
+        ▲ +1.20%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      Ξ Ethereum
+      
+        
+          $2,148
+        
+        ▲ +0.44%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ◎ Solana
+      
+        
+          $89.14
+        
+        ▲ +0.24%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      💫 XRP
+      
+        
+          $1.45
+        
+        ▲ +0.30%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🔶 BNB
+      
+        
+          $643.11
+        
+        ▲ +0.60%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🥇 金
+      
+        
+          $4,718
+        
+        ▲ +1.30%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🥈 銀
+      
+        
+          $73.83
+        
+        ▲ +1.02%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ✨ プラチナ
+      
+        
+          $2,005
+        
+        ▲ +1.34%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🛢️ 原油(WTI)
+      
+        
+          $93.86
+        
+        ▲ +1.06%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🔥 天然ガス
+      
+        
+          $3.13
+        
+        ▲ +0.10%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      🗾 日経225
+      
+        
+          $53,373
+        
+        ▼ -3.29%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      🇺🇸 S&P 500
+      
+        
+          $6,606
+        
+        ▼ -0.27%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      📈 NYダウ
+      
+        
+          $46,021
+        
+        ▼ -0.44%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      💡 NASDAQ
+      
+        
+          $22,091
+        
+        ▼ -0.28%
+      
+    </span>
+    
+    <span class="ticker-item down">
+      🇭🇰 香港ハンセン
+      
+        
+          $25,340
+        
+        ▼ -0.63%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ₿ Bitcoin
+      
+        
+          $70,779
+        
+        ▲ +1.20%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      Ξ Ethereum
+      
+        
+          $2,148
+        
+        ▲ +0.44%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ◎ Solana
+      
+        
+          $89.14
+        
+        ▲ +0.24%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      💫 XRP
+      
+        
+          $1.45
+        
+        ▲ +0.30%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🔶 BNB
+      
+        
+          $643.11
+        
+        ▲ +0.60%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🥇 金
+      
+        
+          $4,718
+        
+        ▲ +1.30%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🥈 銀
+      
+        
+          $73.83
+        
+        ▲ +1.02%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      ✨ プラチナ
+      
+        
+          $2,005
+        
+        ▲ +1.34%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🛢️ 原油(WTI)
+      
+        
+          $93.86
+        
+        ▲ +1.06%
+      
+    </span>
+    
+    <span class="ticker-item up">
+      🔥 天然ガス
+      
+        
+          $3.13
+        
+        ▲ +0.10%
+      
+    </span>
+    
+  </div>
+</div>
+
+<!-- ████████████████████  主要指数  ████████████████████ -->
+<div class="section">
+  <div class="section-title">📊 主要株価指数</div>
+  <div class="index-grid">
+    
+    <div class="index-card glass">
+      <div class="idx-emoji">🗾</div>
+      <div class="idx-name">日経225</div>
+      
+      <div class="idx-price">
+        53,372.53
+        
+      </div>
+      <div class="idx-pct down">
+        ▼ -3.29%
+      </div>
+      
+    </div>
+    
+    <div class="index-card glass">
+      <div class="idx-emoji">🇺🇸</div>
+      <div class="idx-name">S&P 500</div>
+      
+      <div class="idx-price">
+        6,606.49
+        
+      </div>
+      <div class="idx-pct down">
+        ▼ -0.27%
+      </div>
+      
+    </div>
+    
+    <div class="index-card glass">
+      <div class="idx-emoji">📈</div>
+      <div class="idx-name">NYダウ</div>
+      
+      <div class="idx-price">
+        46,021.43
+        
+      </div>
+      <div class="idx-pct down">
+        ▼ -0.44%
+      </div>
+      
+    </div>
+    
+    <div class="index-card glass">
+      <div class="idx-emoji">💡</div>
+      <div class="idx-name">NASDAQ</div>
+      
+      <div class="idx-price">
+        22,090.69
+        
+      </div>
+      <div class="idx-pct down">
+        ▼ -0.28%
+      </div>
+      
+    </div>
+    
+    <div class="index-card glass">
+      <div class="idx-emoji">🇭🇰</div>
+      <div class="idx-name">香港ハンセン</div>
+      
+      <div class="idx-price">
+        25,340.43
+        
+      </div>
+      <div class="idx-pct down">
+        ▼ -0.63%
+      </div>
+      
+    </div>
+    
+  </div>
+</div>
+
+<!-- ████████████████████  仮想通貨  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🪙 仮想通貨 / Crypto</div>
+  <div class="crypto-grid">
+    
+    <div class="crypto-card">
+      <div class="c-symbol">₿</div>
+      <div class="c-name">Bitcoin</div>
+      
+      <div class="c-price">
+        $70,779
+        
+      </div>
+      <div class="c-pct up">▲ +1.20%</div>
+      
+    </div>
+    
+    <div class="crypto-card">
+      <div class="c-symbol">Ξ</div>
+      <div class="c-name">Ethereum</div>
+      
+      <div class="c-price">
+        $2,148
+        
+      </div>
+      <div class="c-pct up">▲ +0.44%</div>
+      
+    </div>
+    
+    <div class="crypto-card">
+      <div class="c-symbol">◎</div>
+      <div class="c-name">Solana</div>
+      
+      <div class="c-price">
+        $89.14
+        
+      </div>
+      <div class="c-pct up">▲ +0.24%</div>
+      
+    </div>
+    
+    <div class="crypto-card">
+      <div class="c-symbol">💫</div>
+      <div class="c-name">XRP</div>
+      
+      <div class="c-price">
+        $1.45
+        
+      </div>
+      <div class="c-pct up">▲ +0.30%</div>
+      
+    </div>
+    
+    <div class="crypto-card">
+      <div class="c-symbol">🔶</div>
+      <div class="c-name">BNB</div>
+      
+      <div class="c-price">
+        $643.11
+        
+      </div>
+      <div class="c-pct up">▲ +0.60%</div>
+      
+    </div>
+    
+  </div>
+</div>
+
+<!-- ████████████████████  コモディティ  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🏅 コモディティ / Commodities</div>
+  <div class="commodity-grid">
+    
+    <div class="commodity-card">
+      <div class="m-emoji">🥇</div>
+      <div class="m-name">金</div>
+      
+      <div class="m-price">
+        $4,717.80
+        
+      </div>
+      <div class="m-pct up">▲ +1.30%</div>
+      <div class="m-unit">USD/oz</div>
+      
+    </div>
+    
+    <div class="commodity-card">
+      <div class="m-emoji">🥈</div>
+      <div class="m-name">銀</div>
+      
+      <div class="m-price">
+        $73.830
+      </div>
+      <div class="m-pct up">▲ +1.02%</div>
+      <div class="m-unit">USD/oz</div>
+      
+    </div>
+    
+    <div class="commodity-card">
+      <div class="m-emoji">✨</div>
+      <div class="m-name">プラチナ</div>
+      
+      <div class="m-price">
+        $2,004.70
+        
+      </div>
+      <div class="m-pct up">▲ +1.34%</div>
+      <div class="m-unit">USD/oz</div>
+      
+    </div>
+    
+    <div class="commodity-card">
+      <div class="m-emoji">🛢️</div>
+      <div class="m-name">原油(WTI)</div>
+      
+      <div class="m-price">
+        $93.860
+      </div>
+      <div class="m-pct up">▲ +1.06%</div>
+      <div class="m-unit">USD/bbl</div>
+      
+    </div>
+    
+    <div class="commodity-card">
+      <div class="m-emoji">🔥</div>
+      <div class="m-name">天然ガス</div>
+      
+      <div class="m-price">
+        $3.131
+      </div>
+      <div class="m-pct up">▲ +0.10%</div>
+      <div class="m-unit">USD/MMBtu</div>
+      
+    </div>
+    
+  </div>
+</div>
+
+<!-- ████████████████████  セクター  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🏢 セクター別動向 (米国ETF)</div>
+  <div class="sector-grid">
+    
+    <span class="sector-pill up">
+      💻 テクノロジー
+      
+        ▲ +0.67%
+      
+    </span>
+    
+    <span class="sector-pill up">
+      🏦 金融
+      
+        ▲ +0.04%
+      
+    </span>
+    
+    <span class="sector-pill up">
+      ⚡ エネルギー
+      
+        ▲ +1.42%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🏥 ヘルスケア
+      
+        ▼ -0.27%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🏭 資本財
+      
+        ▼ -0.35%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🛍️ 一般消費財
+      
+        ▼ -0.89%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🛒 生活必需品
+      
+        ▼ -0.77%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🔩 素材
+      
+        ▼ -1.31%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      💡 公益事業
+      
+        ▼ -0.51%
+      
+    </span>
+    
+    <span class="sector-pill down">
+      🏠 不動産
+      
+        ▼ -0.42%
+      
+    </span>
+    
+  </div>
+</div>
+
+<div class="divider" style="max-width:1400px;margin:0 auto;"></div>
+
+<!-- ████████████████████  ニュース  ████████████████████ -->
+<div class="section">
+  <div class="section-title">📰 最新ニュース</div>
+  <div class="news-grid">
+
+    <!-- 🗾 日本市場 -->
+    <div>
+      <div class="news-column-title jp">🗾 日本市場</div>
+      <div class="news-list jp" style="background: rgba(236,72,153,.04);">
+        
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📌',
+              title: "BC-Nikkei 225 Futures",
+              original: "BC-Nikkei 225 Futures",
+              summary: "Prices as of 7:30:00 PM Thursday, March 19. Nikkei 225 (Yen) (CME)",
+              link: "https://finance.yahoo.com/markets/world-indices/articles/bc-nikkei-225-futures-223012868.html?.tsrc=rss",
+              date: "Thu, 19 Mar 2026 22:30:12 +0000"
+            })">
+            <span class="news-icon">📌</span>
+            <div class="news-body">
+              <div class="news-title">BC-Nikkei 225 Futures</div>
+              <div class="news-date">Thu, 19 Mar 2026 22:30:12 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📊',
+              title: "Wall Street and FTSE tumble as traders digest central bank decisions",
+              original: "Wall Street and FTSE tumble as traders digest central bank decisions",
+              summary: "The BoE left its benchmark rate unchanged at 3.75%, while the ECB kept the deposit rate on hold at 2%.",
+              link: "https://uk.finance.yahoo.com/news/ftse-100-live-stocks-bank-of-england-european-central-bank-interest-rates-090401249.html?.tsrc=rss",
+              date: "Thu, 19 Mar 2026 09:04:01 +0000"
+            })">
+            <span class="news-icon">📊</span>
+            <div class="news-body">
+              <div class="news-title">Wall Street and FTSE tumble as traders digest central bank decisions</div>
+              <div class="news-date">Thu, 19 Mar 2026 09:04:01 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '💹',
+              title: "Wall Street and FTSE dip as US producer prices fall ahead of Fed rate decision",
+              original: "Wall Street and FTSE dip as US producer prices fall ahead of Fed rate decision",
+              summary: "The Federal Reserve is widely expected to leave US interest rates on hold",
+              link: "https://uk.finance.yahoo.com/news/ftse-100-live-stocks-iraq-oil-exports-turkey-091146403.html?.tsrc=rss",
+              date: "Wed, 18 Mar 2026 09:11:46 +0000"
+            })">
+            <span class="news-icon">💹</span>
+            <div class="news-body">
+              <div class="news-title">Wall Street and FTSE dip as US producer prices fall ahead of Fed rate decision</div>
+              <div class="news-date">Wed, 18 Mar 2026 09:11:46 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '🔔',
+              title: "Asia Equities Gain Ahead of Fed, Oil Retreats But Stays High",
+              original: "Asia Equities Gain Ahead of Fed, Oil Retreats But Stays High",
+              summary: "Asian equity markets advanced broadly on Wednesday after a positive lead from Wall Street overnight, while oil retreated but stayed high as the conflict in the Middle East continued.",
+              link: "https://www.wsj.com/finance/asia-equities-make-cautious-gains-ahead-of-fed-oil-retreats-but-stays-high-e4251fdf?siteid=yhoof2\u0026yptr=yahoo",
+              date: "Wed, 18 Mar 2026 07:57:00 +0000"
+            })">
+            <span class="news-icon">🔔</span>
+            <div class="news-body">
+              <div class="news-title">Asia Equities Gain Ahead of Fed, Oil Retreats But Stays High</div>
+              <div class="news-date">Wed, 18 Mar 2026 07:57:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📣',
+              title: "AI-Led Rally in Asian Stocks Proves Short Lived",
+              original: "AI-Led Rally in Asian Stocks Proves Short Lived",
+              summary: "A rebound in U.S. artificial-intelligence stocks overnight and upbeat guidance from AI chip giant Nvidia spilled over into the morning Asia session, sending technology-related names higher. However, much of the cheer faded later in the day, as oil held firmly above $100 a barrel and the Middle East ",
+              link: "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-03-17-2026/card/ai-led-rally-in-asian-stocks-proves-short-lived-zgTg8oDCDeQFAdTx9l33?siteid=yhoof2\u0026yptr=yahoo",
+              date: "Tue, 17 Mar 2026 09:34:08 +0000"
+            })">
+            <span class="news-icon">📣</span>
+            <div class="news-body">
+              <div class="news-title">AI-Led Rally in Asian Stocks Proves Short Lived</div>
+              <div class="news-date">Tue, 17 Mar 2026 09:34:08 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '🏦',
+              title: "Oil went over $100 again after the U.S. admitted it cannot control the Strait of Hormuz",
+              original: "Oil went over $100 again after the U.S. admitted it cannot control the Strait of Hormuz",
+              summary: "Oil is trading like a meme stock, some analysts say.",
+              link: "https://finance.yahoo.com/news/oil-went-over-100-again-104655235.html?.tsrc=rss",
+              date: "Thu, 12 Mar 2026 10:46:55 +0000"
+            })">
+            <span class="news-icon">🏦</span>
+            <div class="news-body">
+              <div class="news-title">Oil went over $100 again after the U.S. admitted it cannot control the Strait of Hormuz</div>
+              <div class="news-date">Thu, 12 Mar 2026 10:46:55 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '💼',
+              title: "How Asia\u2019s Selloff Is a Warning Sign for U.S. Investors",
+              original: "How Asia\u2019s Selloff Is a Warning Sign for U.S. Investors",
+              summary: "Selloffs in South Korea, Japan, and Taiwan highlight supply-chain and energy risks that could eventually spill into U.S. markets as the Iran conflict escalates.",
+              link: "https://www.barrons.com/articles/iran-conflict-asia-markets-warning-us-investors-be952442?siteid=yhoof2\u0026yptr=yahoo",
+              date: "Tue, 10 Mar 2026 13:35:00 +0000"
+            })">
+            <span class="news-icon">💼</span>
+            <div class="news-body">
+              <div class="news-title">How Asia’s Selloff Is a Warning Sign for U.S. Investors</div>
+              <div class="news-date">Tue, 10 Mar 2026 13:35:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📋',
+              title: "FTSE surges and Wall Street turns green as investors monitor Iran developments",
+              original: "FTSE surges and Wall Street turns green as investors monitor Iran developments",
+              summary: "Stocks surged on what was described by US defence secretary as \u0027most intense day\u0027 of strikes",
+              link: "https://uk.finance.yahoo.com/news/ftse-100-live-stocks-trump-iran-war-us-oil-prices-090324444.html?.tsrc=rss",
+              date: "Tue, 10 Mar 2026 09:03:24 +0000"
+            })">
+            <span class="news-icon">📋</span>
+            <div class="news-body">
+              <div class="news-title">FTSE surges and Wall Street turns green as investors monitor Iran developments</div>
+              <div class="news-date">Tue, 10 Mar 2026 09:03:24 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+        
+      </div>
+    </div>
+
+    <!-- 🇺🇸 米国市場 -->
+    <div>
+      <div class="news-column-title us">🇺🇸 米国市場</div>
+      <div class="news-list us" style="background: rgba(6,182,212,.04);">
+        
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📌',
+              title: "Guggenheim Initiates ADP as Buy, Says Fears around AI Are Premature",
+              original: "Guggenheim Initiates ADP as Buy, Says Fears around AI Are Premature",
+              summary: "Automatic Data Processing, Inc. (NASDAQ:ADP) is included among the 15 Dividend Stocks to Buy for Steady Income. On March 19, Guggenheim initiated coverage of Automatic Data Processing, Inc. (NASDAQ:ADP) with a Buy rating. The firm also set a $270 price target on the stock. The analyst noted that ADP",
+              link: "https://finance.yahoo.com/markets/stocks/articles/guggenheim-initiates-adp-buy-says-042748279.html?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 04:27:48 +0000"
+            })">
+            <span class="news-icon">📌</span>
+            <div class="news-body">
+              <div class="news-title">Guggenheim Initiates ADP as Buy, Says Fears around AI Are Premature</div>
+              <div class="news-date">Fri, 20 Mar 2026 04:27:48 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📊',
+              title: "Dow Jones Futures Rise; Stocks Slash Losses, Oil Prices Fall On Trump Iran War Comments",
+              original: "Dow Jones Futures Rise; Stocks Slash Losses, Oil Prices Fall On Trump Iran War Comments",
+              summary: "Stocks came off 2026 lows and oil prices reversed lower amid Iran war comments from President Trump and Israeli PM Netanyahu. Tesla stock broke key levels.",
+              link: "https://finance.yahoo.com/m/309cd0d9-0b3e-3394-9d80-10b568cc2062/dow-jones-futures-rise%3B.html?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 03:03:33 +0000"
+            })">
+            <span class="news-icon">📊</span>
+            <div class="news-body">
+              <div class="news-title">Dow Jones Futures Rise; Stocks Slash Losses, Oil Prices Fall On Trump Iran War Comments</div>
+              <div class="news-date">Fri, 20 Mar 2026 03:03:33 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '💹',
+              title: "Palantir Stock Is 2,500% More Expensive Than the S\u0026P 500 Average. History Is Clear About What Happens Next.",
+              original: "Palantir Stock Is 2,500% More Expensive Than the S\u0026P 500 Average. History Is Clear About What Happens Next.",
+              summary: "Palantir\u0027s CEO says traditional valuation metrics \"no longer apply\" to his company.",
+              link: "https://www.fool.com/investing/2026/03/19/palantir-stock-is-2500-more-expensive-than-the-sp/?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 02:50:00 +0000"
+            })">
+            <span class="news-icon">💹</span>
+            <div class="news-body">
+              <div class="news-title">Palantir Stock Is 2,500% More Expensive Than the S&P 500 Average. History Is Clear About What Happens Next.</div>
+              <div class="news-date">Fri, 20 Mar 2026 02:50:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '🔔',
+              title: "This Transportation Stock May Outperform the S\u0026P 500 in 2026",
+              original: "This Transportation Stock May Outperform the S\u0026P 500 in 2026",
+              summary: "Tesla has had a worse 2026 than the S\u0026P 500, but its decline is more likely a bump in the road than a crash.",
+              link: "https://www.fool.com/investing/2026/03/19/this-transportation-stock-may-outperform-the-sp-50/?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 01:25:00 +0000"
+            })">
+            <span class="news-icon">🔔</span>
+            <div class="news-body">
+              <div class="news-title">This Transportation Stock May Outperform the S&P 500 in 2026</div>
+              <div class="news-date">Fri, 20 Mar 2026 01:25:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📣',
+              title: "3 Best Dividend Growth Stocks to Buy in March",
+              original: "3 Best Dividend Growth Stocks to Buy in March",
+              summary: "Investors looking for something to hold onto during turbulent times have three great dividend growth options to consider right now.",
+              link: "https://www.fool.com/investing/2026/03/19/3-best-dividend-growth-stocks-to-buy-in-march/?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 00:35:00 +0000"
+            })">
+            <span class="news-icon">📣</span>
+            <div class="news-body">
+              <div class="news-title">3 Best Dividend Growth Stocks to Buy in March</div>
+              <div class="news-date">Fri, 20 Mar 2026 00:35:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '🏦',
+              title: "VBR vs. SLYV: Is Broader Small-Cap Value Exposure or a Focus on Profitable Companies the Better Choice for Investors?",
+              original: "VBR vs. SLYV: Is Broader Small-Cap Value Exposure or a Focus on Profitable Companies the Better Choice for Investors?",
+              summary: "The Vanguard Small-Cap Value ETF (VBR) spans a wider range of small-cap value stocks, while the SPDR S\u0026P 600 Small Cap Value ETF (SLYV) limits its holdings to companies with positive earnings. This difference plays out in what investors actually own\u2014whether the portfolio includes more recovery-drive",
+              link: "https://www.fool.com/coverage/etfs/2026/03/19/vbr-vs-slyv-is-broader-small-cap-value-exposure-or-a-focus-on-profitable-companies-the-better-choice-for-investors/?.tsrc=rss",
+              date: "Fri, 20 Mar 2026 00:21:12 +0000"
+            })">
+            <span class="news-icon">🏦</span>
+            <div class="news-body">
+              <div class="news-title">VBR vs. SLYV: Is Broader Small-Cap Value Exposure or a Focus on Profitable Companies the Better Choice for Investors?</div>
+              <div class="news-date">Fri, 20 Mar 2026 00:21:12 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '💼',
+              title: "Review \u0026 Preview: Fog of War",
+              original: "Review \u0026 Preview: Fog of War",
+              summary: "Oil surged to nearly $120 a barrel on Thursday, weighing on stocks. Plus, lessons from the metaverse.",
+              link: "https://finance.yahoo.com/m/9ac99141-c797-3b3b-a29e-6b087aa8b205/review-%26-preview%3A-fog-of-war.html?.tsrc=rss",
+              date: "Thu, 19 Mar 2026 23:55:00 +0000"
+            })">
+            <span class="news-icon">💼</span>
+            <div class="news-body">
+              <div class="news-title">Review & Preview: Fog of War</div>
+              <div class="news-date">Thu, 19 Mar 2026 23:55:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+          
+          <div class="news-card"
+            @click="open({
+              emoji: '📋',
+              title: "Top 2 Once-in-a-Decade Consumer Picks for Long-Term Investors",
+              original: "Top 2 Once-in-a-Decade Consumer Picks for Long-Term Investors",
+              summary: "You can rest easy having these stocks in your portfolio.",
+              link: "https://www.fool.com/investing/2026/03/19/top-2-once-in-a-decade-sector-picks-for-long-term/?.tsrc=rss",
+              date: "Thu, 19 Mar 2026 23:25:00 +0000"
+            })">
+            <span class="news-icon">📋</span>
+            <div class="news-body">
+              <div class="news-title">Top 2 Once-in-a-Decade Consumer Picks for Long-Term Investors</div>
+              <div class="news-date">Thu, 19 Mar 2026 23:25:00 +0000</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          
+        
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████████████████████  モーダル  ████████████████████ -->
+<div class="modal-overlay"
+  x-show="modal"
+  x-cloak
+  @click.self="close()"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0">
+
+  <div class="modal-box"
+    x-transition:enter="transition ease-out duration-250"
+    x-transition:enter-start="opacity-0 scale-90"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    style="transform-origin: center;">
+
+    <div class="modal-header">
+      <span class="m-emoji" x-text="current.emoji"></span>
+      <div class="m-title" x-text="current.title"></div>
+      <button class="modal-close" @click="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <template x-if="current.original && current.original !== current.title">
+        <div class="modal-original">
+          🔤 原文: <span x-text="current.original"></span>
+        </div>
+      </template>
+      <div class="modal-summary" x-text="current.summary || '詳細情報はリンク先をご覧ください。'"></div>
+      <template x-if="current.date">
+        <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted);">
+          🕐 <span x-text="current.date"></span>
+        </div>
+      </template>
+    </div>
+
+    <div class="modal-footer">
+      <template x-if="current.link">
+        <a class="modal-link" :href="current.link" target="_blank" rel="noopener">
+          元記事を読む 🔗
+        </a>
+      </template>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████████████████████  FOOTER  ████████████████████ -->
+<footer>
+  <p>🤖 このページは <strong>GitHub Actions</strong> + <strong>Claude AI</strong> により自動生成されます</p>
+  <p style="margin-top:.4rem;">
+    データ取得: Yahoo Finance / Reuters RSS |
+    価格: <a href="https://finance.yahoo.com" target="_blank">yfinance</a> |
+    翻訳: <a href="https://anthropic.com" target="_blank">Anthropic Claude</a>
+  </p>
+  <p style="margin-top:.4rem; font-size:.7rem;">※ 投資判断の参考情報です。正確性・完全性を保証するものではありません。</p>
+</footer>
+
+<!-- ESCキーでモーダルを閉じる -->
+<script>
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.body.__x && document.body.__x.$data.close();
+    }
+  });
+</script>
+
+</body>
+</html>
