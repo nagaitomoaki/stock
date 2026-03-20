@@ -485,6 +485,23 @@
     .featured-body { font-size: .88rem; line-height: 1.75; color: var(--text); }
     .featured-body.outlook { color: #a5f3fc; }
 
+    /* ── APIキー未設定通知 ──────────────────────────────────────── */
+    .no-api-notice {
+      display: flex; align-items: flex-start; gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: rgba(251,191,36,.06);
+      border: 1px dashed rgba(251,191,36,.35);
+      border-radius: var(--radius);
+      color: var(--muted);
+    }
+    .no-api-icon { font-size: 1.8rem; flex-shrink: 0; }
+    .no-api-title { font-weight: 700; color: #fbbf24; margin-bottom: .3rem; }
+    .no-api-body  { font-size: .88rem; line-height: 1.7; }
+    .no-api-body code {
+      background: rgba(255,255,255,.1); padding: .1rem .4rem;
+      border-radius: 4px; font-family: monospace; color: #a78bfa;
+    }
+
     /* ── スクロールバー ──────────────────────────────────────────── */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: var(--bg0); }
@@ -623,9 +640,9 @@
 <div class="divider" style="max-width:1400px;margin:0 auto;"></div>
 
 <!-- ████████████████████  市場解説  ████████████████████ -->
-{% if commentary and (commentary.overview or commentary.drivers or commentary.global_trends) %}
 <div class="section">
   <div class="section-title">🧠 本日の市場解説 <span class="ai-badge">✨ AI Analysis</span></div>
+  {% if commentary and (commentary.overview or commentary.drivers or commentary.global_trends) %}
   <div class="commentary-grid">
 
     {% if commentary.overview %}
@@ -653,15 +670,23 @@
     {% endif %}
 
   </div>
+  {% else %}
+  <div class="no-api-notice">
+    <span class="no-api-icon">🔑</span>
+    <div>
+      <div class="no-api-title">AI解説を有効にするには</div>
+      <div class="no-api-body">GitHub リポジトリの Settings → Secrets → Actions に <code>ANTHROPIC_API_KEY</code> を登録してください。登録後にワークフローを再実行すると、Claudeによる市場解説が表示されます。</div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <div class="divider" style="max-width:1400px;margin:0 auto;"></div>
-{% endif %}
 
 <!-- ████████████████████  注目銘柄特集  ████████████████████ -->
-{% if featured %}
 <div class="section">
   <div class="section-title">🔥 本日の注目銘柄・業界特集 <span class="ai-badge">✨ AI Picks</span></div>
+  {% if featured %}
   <div class="featured-grid">
     {% for pick in featured %}
     <div class="featured-card risk-{{ pick.risk }}">
@@ -689,10 +714,18 @@
     </div>
     {% endfor %}
   </div>
+  {% else %}
+  <div class="no-api-notice">
+    <span class="no-api-icon">🔑</span>
+    <div>
+      <div class="no-api-title">AI注目銘柄を有効にするには</div>
+      <div class="no-api-body">GitHub リポジトリの Settings → Secrets → Actions に <code>ANTHROPIC_API_KEY</code> を登録してください。登録後にワークフローを再実行すると、Claudeによる注目銘柄・業界特集が表示されます。</div>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <div class="divider" style="max-width:1400px;margin:0 auto;"></div>
-{% endif %}
 
 <!-- ████████████████████  ニュース  ████████████████████ -->
 <div class="section">
