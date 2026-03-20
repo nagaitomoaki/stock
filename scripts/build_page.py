@@ -39,7 +39,9 @@ def build(output: Path) -> None:
 
     all_items = translate_and_summarise(all_items)
 
-    # フィードに書き戻す（参照を共有しているので自動反映）
+    # テンプレート用にフラットなリストを用意
+    jp_items = [item for feed in jp_news["feeds"] for item in feed["items"]]
+    us_items = [item for feed in us_news["feeds"] for item in feed["items"]]
 
     print("🎨 HTML を生成中...")
     try:
@@ -52,13 +54,12 @@ def build(output: Path) -> None:
         loader=FileSystemLoader(str(ROOT / "templates")),
         autoescape=select_autoescape(["html"]),
     )
-    # tojson フィルターは Jinja2 2.9+ で標準搭載
     template = env.get_template("index.html.jinja")
 
     html = template.render(
         updated_at=updated_at,
-        jp_news=jp_news,
-        us_news=us_news,
+        jp_items=jp_items,
+        us_items=us_items,
         prices=prices,
     )
 

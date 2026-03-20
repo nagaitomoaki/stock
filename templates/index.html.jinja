@@ -534,8 +534,6 @@
     <div>
       <div class="news-column-title jp">🗾 日本市場</div>
       <div class="news-list jp" style="background: rgba(236,72,153,.04);">
-        {% set jp_items = [] %}
-        {% for feed in jp_news.feeds %}{% for item in feed.items %}{% set _ = jp_items.append(item) %}{% endfor %}{% endfor %}
         {% if jp_items %}
           {% for item in jp_items[:12] %}
           {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
@@ -566,8 +564,6 @@
     <div>
       <div class="news-column-title us">🇺🇸 米国市場</div>
       <div class="news-list us" style="background: rgba(6,182,212,.04);">
-        {% set us_items = [] %}
-        {% for feed in us_news.feeds %}{% for item in feed.items %}{% set _ = us_items.append(item) %}{% endfor %}{% endfor %}
         {% if us_items %}
           {% for item in us_items[:12] %}
           {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
