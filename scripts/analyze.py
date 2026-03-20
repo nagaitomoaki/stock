@@ -235,6 +235,138 @@ def generate_watchlist_analysis(watchlist: list[dict], prices: dict, jp_items: l
         return []
 
 
+def generate_future_outlook(
+    prices: dict,
+    jp_items: list[dict],
+    us_items: list[dict],
+) -> dict:
+    """
+    中長期の相場見通しと本日のアクションプランを生成。
+    Returns:
+      {
+        "macro_themes": [
+          {
+            "theme": str,             # テーマ名
+            "emoji": str,
+            "description": str,       # 現状説明（2文）
+            "historical_parallel": str, # 過去の類似例
+            "timeline": str,          # いつまでに何が起こりそうか
+            "sectors_to_watch": [str] # 注目セクター
+          }, ...  # 3件
+        ],
+        "sector_rotation": {
+          "current_leaders": [str],   # 現在強いセクター
+          "emerging": [str],          # 台頭しつつあるセクター
+          "lagging": [str],           # 出遅れセクター
+          "rotation_hint": str        # ローテーションの解説（2文）
+        },
+        "recovery_scenarios": [
+          {
+            "asset": str,             # 資産名（SaaS株など）
+            "emoji": str,
+            "current_situation": str, # 現状（1文）
+            "historical_case": str,   # 過去の類似例（ITバブルなど）
+            "recovery_timeline": str, # 回復の目安期間
+            "conditions": str         # 回復に必要な条件（1〜2文）
+          }, ...  # 2〜3件
+        ],
+        "today_actions": [
+          {
+            "priority": int,          # 1=最優先
+            "action": str,            # アクション名
+            "emoji": str,
+            "reason": str,            # 理由（1〜2文）
+            "timing": str             # タイミングヒント
+          }, ...  # 4〜5件
+        ]
+      }
+    """
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    if not api_key:
+        return {}
+
+    try:
+        import anthropic  # type: ignore
+    except ImportError:
+        return {}
+
+    snapshot = _build_market_snapshot(prices)
+    news_text = _build_news_summary(jp_items, us_items)
+
+    prompt = f"""あなたは株式市場の上級アナリストです。以下の市場データとニュースをもとに、
+中長期の相場見通しと本日のデイトレーダー向けアクションプランを日本語で作成してください。
+
+{snapshot}
+
+{news_text}
+
+---
+
+## 出力形式（JSONのみ、コードブロック不要）
+
+{{
+  "macro_themes": [
+    {{
+      "theme":               "マクロテーマ名（例: 地政学リスクとエネルギー高騰）",
+      "emoji":               "🌐",
+      "description":         "現状を2文で。具体的な数値や最新動向を含める。",
+      "historical_parallel": "過去の類似局面の具体例（例: 2022年ロシア侵攻時、1970年代オイルショック）",
+      "timeline":            "今後3〜12ヶ月の展望を1〜2文で。",
+      "sectors_to_watch":    ["セクター1", "セクター2"]
+    }}
+  ],
+  "sector_rotation": {{
+    "current_leaders":  ["エネルギー", "防衛"],
+    "emerging":         ["素材", "インフラ"],
+    "lagging":          ["SaaS", "ハイグロース"],
+    "rotation_hint":    "セクターローテーションの現状と今後の方向性を2文で解説。"
+  }},
+  "recovery_scenarios": [
+    {{
+      "asset":              "SaaS/グロース株",
+      "emoji":              "💻",
+      "current_situation":  "現状を1文で。",
+      "historical_case":    "2000年ITバブル崩壊後の回復パターンなど、具体的な過去事例。",
+      "recovery_timeline":  "回復の目安（例: 金利ピークアウトから6〜18ヶ月）",
+      "conditions":         "回復に必要な条件を1〜2文で。"
+    }}
+  ],
+  "today_actions": [
+    {{
+      "priority": 1,
+      "action":   "アクション名（簡潔に）",
+      "emoji":    "🎯",
+      "reason":   "このアクションが優先される理由を1〜2文で。",
+      "timing":   "寄り付き直後 / 前場中盤 / 後場 / 今日は見送り など"
+    }}
+  ]
+}}
+
+注意:
+- macro_themes は3件、recovery_scenarios は2〜3件、today_actions は4〜5件（優先度順）
+- today_actions はデイトレーダー（日本株）向けの具体的な行動を優先度順に並べる
+- 歴史的事例は必ず実際の出来事（年・相場名）を引用すること
+- 投資助言にならないよう「注目」「観察」「参考まで」等の表現を使うこと
+- JSONのみを返すこと"""
+
+    try:
+        import anthropic  # type: ignore
+        client = anthropic.Anthropic(api_key=api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=3000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text.strip()
+        start = raw.find("{")
+        end   = raw.rfind("}") + 1
+        return json.loads(raw[start:end])
+
+    except Exception as e:
+        print(f"WARNING: Future outlook generation failed: {e}", file=sys.stderr)
+        return {}
+
+
 def _empty_analysis() -> dict:
     return {
         "commentary": {

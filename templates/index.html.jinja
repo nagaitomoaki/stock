@@ -242,6 +242,61 @@
     /* ── AI バッジ ── */
     .ai-badge { font-size:.62rem; font-weight:700; padding:.18rem .55rem; background:linear-gradient(135deg,rgba(124,58,237,.4),rgba(236,72,153,.3)); border:1px solid rgba(167,139,250,.4); border-radius:999px; color:#c4b5fd; vertical-align:middle; margin-left:.4rem; }
 
+    /* ── 今後の相場見通し ── */
+    .outlook-block { margin-bottom:2rem; }
+    .outlook-block-title { font-size:1rem; font-weight:700; color:var(--accent3); margin-bottom:1rem; letter-spacing:.03em; }
+
+    /* アクションプラン */
+    .action-list { display:flex; flex-direction:column; gap:.6rem; }
+    .action-item { display:flex; gap:1rem; align-items:flex-start; padding:1rem 1.25rem; border-radius:var(--radius); background:var(--glass); border:1px solid var(--glass-b); }
+    .action-item.priority-1 { border-left:3px solid #ff4d6d; }
+    .action-item.priority-2 { border-left:3px solid #fbbf24; }
+    .action-item.priority-3 { border-left:3px solid #00ffa3; }
+    .action-item.priority-4,.action-item.priority-5 { border-left:3px solid #7c3aed; }
+    .action-priority { font-size:.75rem; font-weight:900; color:var(--muted); background:rgba(255,255,255,.08); border-radius:6px; padding:.2rem .5rem; flex-shrink:0; align-self:center; }
+    .action-title { font-weight:700; font-size:.95rem; margin-bottom:.3rem; }
+    .action-reason { font-size:.85rem; color:var(--muted); line-height:1.6; }
+    .action-timing { font-size:.78rem; color:var(--accent3); margin-top:.4rem; }
+
+    /* マクロテーマ */
+    .macro-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+    .macro-card { padding:1.25rem; }
+    .macro-header { display:flex; align-items:center; gap:.6rem; margin-bottom:.75rem; }
+    .macro-emoji { font-size:1.5rem; }
+    .macro-theme { font-weight:700; font-size:.95rem; }
+    .macro-desc { font-size:.85rem; color:var(--text); line-height:1.7; margin-bottom:.75rem; }
+    .macro-history,.macro-timeline { font-size:.82rem; color:var(--muted); line-height:1.6; margin-bottom:.5rem; }
+    .macro-history-label,.macro-timeline-label { display:block; font-weight:700; color:var(--accent2); font-size:.75rem; margin-bottom:.2rem; }
+    .macro-sectors { display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.75rem; }
+    .sector-chip { background:rgba(124,58,237,.25); border:1px solid rgba(124,58,237,.4); border-radius:999px; padding:.2rem .65rem; font-size:.74rem; color:#c4b5fd; }
+
+    /* セクターローテーション */
+    .rotation-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-bottom:1rem; }
+    .rotation-col { padding:1rem; text-align:center; }
+    .rotation-col-title { font-size:.8rem; font-weight:700; margin-bottom:.6rem; }
+    .rotation-leader .rotation-col-title { color:#ff4d6d; }
+    .rotation-emerging .rotation-col-title { color:#00ffa3; }
+    .rotation-lagging .rotation-col-title { color:var(--muted); }
+    .rotation-item { font-size:.82rem; padding:.25rem 0; border-bottom:1px solid rgba(255,255,255,.06); }
+    .rotation-hint { padding:.85rem 1.1rem; font-size:.85rem; color:var(--muted); line-height:1.7; }
+
+    /* 回復シナリオ */
+    .recovery-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem; }
+    .recovery-card { padding:1.25rem; }
+    .recovery-header { display:flex; align-items:center; gap:.6rem; margin-bottom:.85rem; }
+    .recovery-emoji { font-size:1.4rem; }
+    .recovery-asset { font-weight:700; font-size:1rem; }
+    .recovery-row { display:flex; gap:.6rem; align-items:flex-start; margin-bottom:.5rem; font-size:.83rem; line-height:1.6; }
+    .recovery-label { font-weight:700; color:var(--accent3); white-space:nowrap; flex-shrink:0; }
+    .recovery-case { color:var(--muted); font-style:italic; }
+    .recovery-timeline-row { background:rgba(0,255,163,.06); border-radius:8px; padding:.4rem .6rem; }
+    .recovery-timeline-val { color:var(--up); font-weight:700; }
+    .recovery-conditions { font-size:.82rem; color:var(--muted); margin-top:.6rem; padding-top:.6rem; border-top:1px solid rgba(255,255,255,.08); line-height:1.6; }
+
+    @media(max-width:600px) {
+      .rotation-grid { grid-template-columns:1fr; }
+    }
+
     /* ── APIキー未設定通知 ── */
     .no-api-notice { display:flex; align-items:flex-start; gap:.85rem; padding:1rem 1.25rem; background:rgba(251,191,36,.06); border:1px dashed rgba(251,191,36,.35); border-radius:var(--radius); color:var(--muted); }
     .no-api-icon  { font-size:1.6rem; flex-shrink:0; }
@@ -601,6 +656,126 @@
     <span class="no-api-icon">🔑</span>
     <div>
       <div class="no-api-title">AI注目銘柄を有効にするには</div>
+      <div class="no-api-body">GitHub Secrets に <code>ANTHROPIC_API_KEY</code> を登録後、ワークフローを再実行してください。</div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ████  今後の相場見通し  ████ -->
+<div class="section">
+  <div class="section-title">🔮 今後の相場見通し &amp; 本日のアクションプラン <span class="ai-badge">✨ AI Forecast</span></div>
+
+  {% if future_outlook %}
+
+  {# ── 本日のアクションプラン ── #}
+  {% if future_outlook.today_actions %}
+  <div class="outlook-block">
+    <div class="outlook-block-title">🎯 本日の優先アクション（デイトレーダー向け）</div>
+    <div class="action-list">
+      {% for act in future_outlook.today_actions %}
+      <div class="action-item priority-{{ act.priority }}">
+        <div class="action-priority">P{{ act.priority }}</div>
+        <div class="action-body">
+          <div class="action-title">{{ act.emoji }} {{ act.action }}</div>
+          <div class="action-reason">{{ act.reason }}</div>
+          <div class="action-timing">⏱ {{ act.timing }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── マクロテーマ ── #}
+  {% if future_outlook.macro_themes %}
+  <div class="outlook-block">
+    <div class="outlook-block-title">🌐 現在の主要マクロテーマ</div>
+    <div class="macro-grid">
+      {% for t in future_outlook.macro_themes %}
+      <div class="macro-card glass">
+        <div class="macro-header">
+          <span class="macro-emoji">{{ t.emoji }}</span>
+          <span class="macro-theme">{{ t.theme }}</span>
+        </div>
+        <div class="macro-desc">{{ t.description }}</div>
+        <div class="macro-history">
+          <span class="macro-history-label">📚 過去の類似例</span>
+          {{ t.historical_parallel }}
+        </div>
+        <div class="macro-timeline">
+          <span class="macro-timeline-label">📅 今後の展望</span>
+          {{ t.timeline }}
+        </div>
+        {% if t.sectors_to_watch %}
+        <div class="macro-sectors">
+          {% for s in t.sectors_to_watch %}<span class="sector-chip">{{ s }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── セクターローテーション ── #}
+  {% if future_outlook.sector_rotation %}
+  {% set rot = future_outlook.sector_rotation %}
+  <div class="outlook-block">
+    <div class="outlook-block-title">🔄 セクターローテーション</div>
+    <div class="rotation-grid">
+      <div class="rotation-col glass rotation-leader">
+        <div class="rotation-col-title">🔥 現在のリーダー</div>
+        {% for s in rot.current_leaders %}<div class="rotation-item">{{ s }}</div>{% endfor %}
+      </div>
+      <div class="rotation-col glass rotation-emerging">
+        <div class="rotation-col-title">🌱 台頭中</div>
+        {% for s in rot.emerging %}<div class="rotation-item">{{ s }}</div>{% endfor %}
+      </div>
+      <div class="rotation-col glass rotation-lagging">
+        <div class="rotation-col-title">🐢 出遅れ</div>
+        {% for s in rot.lagging %}<div class="rotation-item">{{ s }}</div>{% endfor %}
+      </div>
+    </div>
+    <div class="rotation-hint glass">💡 {{ rot.rotation_hint }}</div>
+  </div>
+  {% endif %}
+
+  {# ── 回復シナリオ ── #}
+  {% if future_outlook.recovery_scenarios %}
+  <div class="outlook-block">
+    <div class="outlook-block-title">📈 回復シナリオ（歴史的パターンから）</div>
+    <div class="recovery-grid">
+      {% for sc in future_outlook.recovery_scenarios %}
+      <div class="recovery-card glass">
+        <div class="recovery-header">
+          <span class="recovery-emoji">{{ sc.emoji }}</span>
+          <span class="recovery-asset">{{ sc.asset }}</span>
+        </div>
+        <div class="recovery-row">
+          <span class="recovery-label">📍 現状</span>
+          <span>{{ sc.current_situation }}</span>
+        </div>
+        <div class="recovery-row">
+          <span class="recovery-label">📚 類似事例</span>
+          <span class="recovery-case">{{ sc.historical_case }}</span>
+        </div>
+        <div class="recovery-row recovery-timeline-row">
+          <span class="recovery-label">⏳ 回復目安</span>
+          <span class="recovery-timeline-val">{{ sc.recovery_timeline }}</span>
+        </div>
+        <div class="recovery-conditions">💡 {{ sc.conditions }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="no-api-notice">
+    <span class="no-api-icon">🔑</span>
+    <div>
+      <div class="no-api-title">AI見通しを有効にするには</div>
       <div class="no-api-body">GitHub Secrets に <code>ANTHROPIC_API_KEY</code> を登録後、ワークフローを再実行してください。</div>
     </div>
   </div>

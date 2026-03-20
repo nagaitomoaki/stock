@@ -16,7 +16,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from fetch_news   import get_news_data
 from fetch_prices import get_price_data
 from translate    import translate_and_summarise
-from analyze      import generate_analysis, generate_watchlist_analysis
+from analyze      import generate_analysis, generate_watchlist_analysis, generate_future_outlook
 
 
 def build(output: Path) -> None:
@@ -48,6 +48,9 @@ def build(output: Path) -> None:
         prices.get("watchlist", []), prices, jp_items, us_items
     )
 
+    print("🔮 将来の相場見通しを生成中...")
+    future_outlook = generate_future_outlook(prices, jp_items, us_items)
+
     print("🎨 HTML を生成中...")
     try:
         from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore
@@ -69,6 +72,7 @@ def build(output: Path) -> None:
         commentary=analysis["commentary"],
         featured=analysis["featured"],
         watchlist_analysis=watchlist_analysis,
+        future_outlook=future_outlook,
     )
 
     output.parent.mkdir(parents=True, exist_ok=True)
