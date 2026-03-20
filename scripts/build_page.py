@@ -17,6 +17,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from fetch_news   import get_news_data
 from fetch_prices import get_price_data
 from translate    import translate_and_summarise
+from analyze      import generate_analysis
 
 
 def build(output: Path) -> None:
@@ -43,6 +44,9 @@ def build(output: Path) -> None:
     jp_items = [item for feed in jp_news["feeds"] for item in feed["items"]]
     us_items = [item for feed in us_news["feeds"] for item in feed["items"]]
 
+    print("🧠 Claude で市場解説・注目銘柄を生成中...")
+    analysis = generate_analysis(prices, jp_items, us_items)
+
     print("🎨 HTML を生成中...")
     try:
         from jinja2 import Environment, FileSystemLoader, select_autoescape  # type: ignore
@@ -61,6 +65,8 @@ def build(output: Path) -> None:
         jp_items=jp_items,
         us_items=us_items,
         prices=prices,
+        commentary=analysis["commentary"],
+        featured=analysis["featured"],
     )
 
     output.parent.mkdir(parents=True, exist_ok=True)
