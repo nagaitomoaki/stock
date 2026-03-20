@@ -1,0 +1,43 @@
+name: 🌍 Update Stock Market Pages
+
+on:
+  schedule:
+    # 🗾 日本市場前: 23:30 UTC = 翌 08:30 JST (日〜木)
+    - cron: "30 23 * * 0-4"
+    # 🇺🇸 米国市場前: 14:00 UTC = 09:00 EST / 10:00 EDT (月〜金)
+    - cron: "0 14 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: 📦 Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: 🏗️ Build HTML page
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scripts/build_page.py --output docs/index.html
+
+      - name: 🚀 Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          publish_branch: gh-pages
+          force_orphan: true
+          commit_message: "🤖 Update market news [$(date -u '+%Y-%m-%d %H:%M UTC')]"

@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌍 世界の株式市場ニュース</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Inter:wght@400;700;900&display=swap" rel="stylesheet" />
+
+  <!-- Alpine.js (モーダル制御) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+  <style>
+    /* ── リセット & ベース ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg0:      #0a0a1a;
+      --bg1:      #11112a;
+      --bg2:      #1a1a3a;
+      --glass:    rgba(255,255,255,0.06);
+      --glass-b:  rgba(255,255,255,0.12);
+      --up:       #00ffa3;
+      --down:     #ff4d6d;
+      --flat:     #aaaacc;
+      --accent1:  #7c3aed;
+      --accent2:  #ec4899;
+      --accent3:  #06b6d4;
+      --text:     #e2e8f0;
+      --muted:    #94a3b8;
+      --radius:   16px;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans JP', 'Inter', sans-serif;
+      background: var(--bg0);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── アニメーション背景 ─────────────────────────────────────── */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -1;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%,  rgba(124,58,237,.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%,  rgba(6,182,212,.25)  0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50%  50%,  rgba(236,72,153,.12) 0%, transparent 70%);
+      animation: bgPulse 12s ease-in-out infinite alternate;
+    }
+    @keyframes bgPulse {
+      0%   { opacity: .8; }
+      100% { opacity: 1;  }
+    }
+
+    /* ── ユーティリティ ─────────────────────────────────────────── */
+    .up   { color: var(--up);   }
+    .down { color: var(--down); }
+    .flat { color: var(--flat); }
+
+    .glass {
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: var(--radius);
+    }
+
+    /* ── ヘッダー ────────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+      position: relative;
+    }
+    .site-title {
+      font-size: clamp(2rem, 6vw, 3.8rem);
+      font-weight: 900;
+      background: linear-gradient(135deg, #a78bfa, #ec4899, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      text-shadow: none;
+      animation: titleGlow 4s ease-in-out infinite alternate;
+    }
+    @keyframes titleGlow {
+      from { filter: drop-shadow(0 0 20px rgba(167,139,250,.4)); }
+      to   { filter: drop-shadow(0 0 40px rgba(236,72,153,.5)); }
+    }
+    .subtitle {
+      margin-top: .5rem;
+      font-size: .95rem;
+      color: var(--muted);
+    }
+    .update-badge {
+      display: inline-flex; align-items: center; gap: .4rem;
+      margin-top: 1rem;
+      padding: .35rem 1rem;
+      background: rgba(6,182,212,.15);
+      border: 1px solid rgba(6,182,212,.3);
+      border-radius: 999px;
+      font-size: .8rem;
+      color: var(--accent3);
+    }
+    .pulse-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent3);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1);   }
+      50%      { opacity: .4; transform: scale(1.5); }
+    }
+
+    /* ── セクション共通 ─────────────────────────────────────────── */
+    .section { padding: 1.5rem 1rem; max-width: 1400px; margin: 0 auto; }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+
+    /* ── 価格ティッカーバー ─────────────────────────────────────── */
+    .ticker-wrap {
+      overflow: hidden;
+      background: rgba(255,255,255,.04);
+      border-top: 1px solid rgba(255,255,255,.08);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      padding: .6rem 0;
+      white-space: nowrap;
+    }
+    .ticker-track {
+      display: inline-flex; gap: 2.5rem;
+      animation: tickerScroll 40s linear infinite;
+    }
+    .ticker-wrap:hover .ticker-track { animation-play-state: paused; }
+    @keyframes tickerScroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(-50%); }
+    }
+    .ticker-item {
+      display: inline-flex; align-items: center; gap: .4rem;
+      font-size: .85rem; font-weight: 700;
+    }
+
+    /* ── 指数カード ─────────────────────────────────────────────── */
+    .index-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .index-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: var(--glass);
+      border: 1px solid var(--glass-b);
+      text-align: center;
+      transition: transform .2s, box-shadow .2s;
+    }
+    .index-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 32px rgba(124,58,237,.25);
+    }
+    .index-card .idx-emoji { font-size: 1.8rem; }
+    .index-card .idx-name  { font-size: .8rem; color: var(--muted); margin: .25rem 0; }
+    .index-card .idx-price { font-size: 1.1rem; font-weight: 700; }
+    .index-card .idx-pct   { font-size: .85rem; font-weight: 700; margin-top: .2rem; }
+
+    /* ── 仮想通貨 ───────────────────────────────────────────────── */
+    .crypto-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .crypto-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(236,72,153,.1));
+      border: 1px solid rgba(167,139,250,.25);
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .crypto-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(167,139,250,.6);
+    }
+    .crypto-card .c-symbol { font-size: 2rem; }
+    .crypto-card .c-name   { font-size: .75rem; color: var(--muted); }
+    .crypto-card .c-price  { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
+    .crypto-card .c-pct    { font-size: .85rem; font-weight: 700; }
+
+    /* ── コモディティ ────────────────────────────────────────────── */
+    .commodity-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 1rem;
+    }
+    .commodity-card {
+      padding: 1.25rem 1rem;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, rgba(6,182,212,.12), rgba(16,185,129,.08));
+      border: 1px solid rgba(6,182,212,.2);
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .commodity-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(6,182,212,.5);
+    }
+    .commodity-card .m-emoji { font-size: 2rem; }
+    .commodity-card .m-name  { font-size: .75rem; color: var(--muted); }
+    .commodity-card .m-price { font-size: 1rem; font-weight: 700; margin: .35rem 0 .1rem; }
+    .commodity-card .m-pct   { font-size: .85rem; font-weight: 700; }
+    .commodity-card .m-unit  { font-size: .65rem; color: var(--muted); }
+
+    /* ── セクター ───────────────────────────────────────────────── */
+    .sector-grid {
+      display: flex; flex-wrap: wrap; gap: .6rem;
+    }
+    .sector-pill {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .5rem 1rem;
+      border-radius: 999px;
+      font-size: .85rem; font-weight: 700;
+      transition: transform .15s;
+      cursor: default;
+    }
+    .sector-pill:hover { transform: scale(1.06); }
+    .sector-pill.up   { background: rgba(0,255,163,.12); border: 1px solid rgba(0,255,163,.3); color: var(--up); }
+    .sector-pill.down { background: rgba(255,77,109,.12); border: 1px solid rgba(255,77,109,.3); color: var(--down); }
+    .sector-pill.flat { background: rgba(170,170,204,.08); border: 1px solid rgba(170,170,204,.2); color: var(--flat); }
+
+    /* ── ニュースグリッド ────────────────────────────────────────── */
+    .news-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
+
+    .news-column-title {
+      font-size: 1.1rem; font-weight: 700;
+      padding: .75rem 1rem;
+      border-radius: var(--radius) var(--radius) 0 0;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .news-column-title.jp {
+      background: linear-gradient(90deg, rgba(236,72,153,.3), rgba(124,58,237,.2));
+      border: 1px solid rgba(236,72,153,.3); border-bottom: none;
+    }
+    .news-column-title.us {
+      background: linear-gradient(90deg, rgba(6,182,212,.3), rgba(59,130,246,.2));
+      border: 1px solid rgba(6,182,212,.3); border-bottom: none;
+    }
+
+    .news-list {
+      border-radius: 0 0 var(--radius) var(--radius);
+      overflow: hidden;
+    }
+    .news-list.jp { border: 1px solid rgba(236,72,153,.25); border-top: none; }
+    .news-list.us { border: 1px solid rgba(6,182,212,.25);  border-top: none; }
+
+    /* ── ニュースカード ─────────────────────────────────────────── */
+    .news-card {
+      display: flex; align-items: flex-start; gap: .75rem;
+      padding: .9rem 1rem;
+      cursor: pointer;
+      transition: background .2s;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .news-card:last-child { border-bottom: none; }
+    .news-card:hover { background: rgba(255,255,255,.07); }
+    .news-card .news-icon {
+      font-size: 1.4rem;
+      flex-shrink: 0;
+      margin-top: .1rem;
+    }
+    .news-card .news-body { flex: 1; min-width: 0; }
+    .news-card .news-title {
+      font-size: .9rem; font-weight: 700;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .news-card .news-date {
+      font-size: .72rem; color: var(--muted);
+      margin-top: .3rem;
+    }
+    .news-card .news-arrow {
+      color: var(--muted); font-size: .9rem;
+      flex-shrink: 0; align-self: center;
+    }
+
+    /* ── モーダル ────────────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      width: 100%; max-width: 560px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #1a1a3a, #11112a);
+      border: 1px solid rgba(167,139,250,.3);
+      box-shadow: 0 24px 80px rgba(0,0,0,.8), 0 0 60px rgba(124,58,237,.2);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem .75rem;
+      background: linear-gradient(90deg, rgba(124,58,237,.2), rgba(236,72,153,.15));
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display: flex; align-items: flex-start; gap: .75rem;
+    }
+    .modal-header .m-emoji { font-size: 1.8rem; flex-shrink: 0; }
+    .modal-header .m-title { font-size: 1rem; font-weight: 700; line-height: 1.45; flex: 1; }
+    .modal-close {
+      background: rgba(255,255,255,.1); border: none; cursor: pointer;
+      color: var(--text); font-size: 1.2rem;
+      width: 32px; height: 32px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .2s;
+    }
+    .modal-close:hover { background: rgba(255,255,255,.2); }
+    .modal-body { padding: 1.25rem 1.5rem; }
+    .modal-original {
+      font-size: .78rem; color: var(--muted);
+      margin-bottom: .75rem;
+      padding: .5rem .75rem;
+      background: rgba(255,255,255,.04);
+      border-radius: 8px;
+      border-left: 3px solid rgba(167,139,250,.4);
+    }
+    .modal-summary {
+      font-size: .95rem; line-height: 1.7;
+      color: var(--text);
+    }
+    .modal-footer {
+      padding: .75rem 1.5rem 1.25rem;
+      display: flex; justify-content: flex-end;
+    }
+    .modal-link {
+      display: inline-flex; align-items: center; gap: .4rem;
+      padding: .55rem 1.25rem;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-radius: 999px;
+      color: #fff; font-weight: 700; font-size: .85rem;
+      text-decoration: none;
+      transition: opacity .2s, transform .2s;
+    }
+    .modal-link:hover { opacity: .85; transform: scale(1.04); }
+
+    /* モーダルアニメーション */
+    [x-cloak] { display: none !important; }
+    .modal-overlay {
+      transition: opacity .2s;
+    }
+    .modal-box {
+      transition: transform .25s cubic-bezier(.34,1.56,.64,1), opacity .2s;
+    }
+
+    /* ── フッター ────────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      padding: 2rem 1rem;
+      font-size: .78rem;
+      color: var(--muted);
+      border-top: 1px solid rgba(255,255,255,.07);
+      margin-top: 2rem;
+    }
+    footer a { color: var(--accent3); text-decoration: none; }
+
+    /* ── セパレーター ────────────────────────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(167,139,250,.3), transparent);
+      margin: .5rem 0;
+    }
+
+    /* ── スクロールバー ──────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg0); }
+    ::-webkit-scrollbar-thumb { background: rgba(167,139,250,.4); border-radius: 3px; }
+  </style>
+</head>
+
+<body x-data="{
+  modal: false,
+  current: {},
+  open(item) { this.current = item; this.modal = true; document.body.style.overflow='hidden'; },
+  close()    { this.modal = false; document.body.style.overflow=''; }
+}">
+
+<!-- ████████████████████  HEADER  ████████████████████ -->
+<header>
+  <div class="site-title">🌍 世界の株式市場ニュース</div>
+  <div class="subtitle">World Stock Market Dashboard</div>
+  <div class="update-badge">
+    <span class="pulse-dot"></span>
+    🕐 最終更新: {{ updated_at }}
+  </div>
+</header>
+
+<!-- ████████████████████  TICKER BAR  ████████████████████ -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    {% set all_tickers = prices.indices + prices.crypto + prices.commodities %}
+    {% for item in all_tickers * 2 %}
+    <span class="ticker-item {{ item.direction if item.price else 'flat' }}">
+      {{ item.emoji }} {{ item.name }}
+      {% if item.price %}
+        {% if item.price >= 1000 %}
+          ${{ "{:,.0f}".format(item.price) }}
+        {% elif item.price >= 1 %}
+          ${{ "{:.2f}".format(item.price) }}
+        {% else %}
+          ${{ "{:.4f}".format(item.price) }}
+        {% endif %}
+        {{ item.arrow }} {{ "{:+.2f}".format(item.change_pct) }}%
+      {% else %}
+        ―
+      {% endif %}
+    </span>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ████████████████████  主要指数  ████████████████████ -->
+<div class="section">
+  <div class="section-title">📊 主要株価指数</div>
+  <div class="index-grid">
+    {% for idx in prices.indices %}
+    <div class="index-card glass">
+      <div class="idx-emoji">{{ idx.emoji }}</div>
+      <div class="idx-name">{{ idx.name }}</div>
+      {% if idx.price %}
+      <div class="idx-price">
+        {% if idx.price >= 1000 %}{{ "{:,.2f}".format(idx.price) }}
+        {% else %}{{ "{:.2f}".format(idx.price) }}{% endif %}
+      </div>
+      <div class="idx-pct {{ idx.direction }}">
+        {{ idx.arrow }} {{ "{:+.2f}".format(idx.change_pct) }}%
+      </div>
+      {% else %}
+      <div class="idx-price flat">―</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ████████████████████  仮想通貨  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🪙 仮想通貨 / Crypto</div>
+  <div class="crypto-grid">
+    {% for c in prices.crypto %}
+    <div class="crypto-card">
+      <div class="c-symbol">{{ c.emoji }}</div>
+      <div class="c-name">{{ c.name }}</div>
+      {% if c.price %}
+      <div class="c-price">
+        {% if c.price >= 1000 %}${{ "{:,.0f}".format(c.price) }}
+        {% elif c.price >= 1 %}${{ "{:.2f}".format(c.price) }}
+        {% else %}${{ "{:.4f}".format(c.price) }}{% endif %}
+      </div>
+      <div class="c-pct {{ c.direction }}">{{ c.arrow }} {{ "{:+.2f}".format(c.change_pct) }}%</div>
+      {% else %}
+      <div class="c-price flat">―</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ████████████████████  コモディティ  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🏅 コモディティ / Commodities</div>
+  <div class="commodity-grid">
+    {% for m in prices.commodities %}
+    <div class="commodity-card">
+      <div class="m-emoji">{{ m.emoji }}</div>
+      <div class="m-name">{{ m.name }}</div>
+      {% if m.price %}
+      <div class="m-price">
+        {% if m.price >= 1000 %}${{ "{:,.2f}".format(m.price) }}
+        {% else %}${{ "{:.3f}".format(m.price) }}{% endif %}
+      </div>
+      <div class="m-pct {{ m.direction }}">{{ m.arrow }} {{ "{:+.2f}".format(m.change_pct) }}%</div>
+      <div class="m-unit">{{ m.unit }}</div>
+      {% else %}
+      <div class="m-price flat">―</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ████████████████████  セクター  ████████████████████ -->
+<div class="section">
+  <div class="section-title">🏢 セクター別動向 (米国ETF)</div>
+  <div class="sector-grid">
+    {% for s in prices.sectors %}
+    <span class="sector-pill {{ s.direction if s.price else 'flat' }}">
+      {{ s.emoji }} {{ s.name }}
+      {% if s.price %}
+        {{ s.arrow }} {{ "{:+.2f}".format(s.change_pct) }}%
+      {% else %}
+        ―
+      {% endif %}
+    </span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="divider" style="max-width:1400px;margin:0 auto;"></div>
+
+<!-- ████████████████████  ニュース  ████████████████████ -->
+<div class="section">
+  <div class="section-title">📰 最新ニュース</div>
+  <div class="news-grid">
+
+    <!-- 🗾 日本市場 -->
+    <div>
+      <div class="news-column-title jp">🗾 日本市場</div>
+      <div class="news-list jp" style="background: rgba(236,72,153,.04);">
+        {% set jp_items = [] %}
+        {% for feed in jp_news.feeds %}{% for item in feed.items %}{% set _ = jp_items.append(item) %}{% endfor %}{% endfor %}
+        {% if jp_items %}
+          {% for item in jp_items[:12] %}
+          {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
+          <div class="news-card"
+            @click="open({
+              emoji: '{{ icons[loop.index0 % icons|length] }}',
+              title: {{ item.title_ja | tojson }},
+              original: {{ item.title | tojson }},
+              summary: {{ item.summary_ja | tojson }},
+              link: {{ item.link | tojson }},
+              date: {{ item.pubDate | tojson }}
+            })">
+            <span class="news-icon">{{ icons[loop.index0 % icons|length] }}</span>
+            <div class="news-body">
+              <div class="news-title">{{ item.title_ja }}</div>
+              <div class="news-date">{{ item.pubDate }}</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--muted);">😴 ニュースなし</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 🇺🇸 米国市場 -->
+    <div>
+      <div class="news-column-title us">🇺🇸 米国市場</div>
+      <div class="news-list us" style="background: rgba(6,182,212,.04);">
+        {% set us_items = [] %}
+        {% for feed in us_news.feeds %}{% for item in feed.items %}{% set _ = us_items.append(item) %}{% endfor %}{% endfor %}
+        {% if us_items %}
+          {% for item in us_items[:12] %}
+          {% set icons = ["📌","📊","💹","🔔","📣","🏦","💼","📋","🔍","📡","💡","🚀"] %}
+          <div class="news-card"
+            @click="open({
+              emoji: '{{ icons[loop.index0 % icons|length] }}',
+              title: {{ item.title_ja | tojson }},
+              original: {{ item.title | tojson }},
+              summary: {{ item.summary_ja | tojson }},
+              link: {{ item.link | tojson }},
+              date: {{ item.pubDate | tojson }}
+            })">
+            <span class="news-icon">{{ icons[loop.index0 % icons|length] }}</span>
+            <div class="news-body">
+              <div class="news-title">{{ item.title_ja }}</div>
+              <div class="news-date">{{ item.pubDate }}</div>
+            </div>
+            <span class="news-arrow">›</span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div style="padding:1.5rem;text-align:center;color:var(--muted);">😴 ニュースなし</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████████████████████  モーダル  ████████████████████ -->
+<div class="modal-overlay"
+  x-show="modal"
+  x-cloak
+  @click.self="close()"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0"
+  x-transition:enter-end="opacity-100"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-start="opacity-100"
+  x-transition:leave-end="opacity-0">
+
+  <div class="modal-box"
+    x-transition:enter="transition ease-out duration-250"
+    x-transition:enter-start="opacity-0 scale-90"
+    x-transition:enter-end="opacity-100 scale-100"
+    x-transition:leave="transition ease-in duration-150"
+    x-transition:leave-start="opacity-100 scale-100"
+    x-transition:leave-end="opacity-0 scale-95"
+    style="transform-origin: center;">
+
+    <div class="modal-header">
+      <span class="m-emoji" x-text="current.emoji"></span>
+      <div class="m-title" x-text="current.title"></div>
+      <button class="modal-close" @click="close()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <template x-if="current.original && current.original !== current.title">
+        <div class="modal-original">
+          🔤 原文: <span x-text="current.original"></span>
+        </div>
+      </template>
+      <div class="modal-summary" x-text="current.summary || '詳細情報はリンク先をご覧ください。'"></div>
+      <template x-if="current.date">
+        <div style="margin-top:.75rem;font-size:.75rem;color:var(--muted);">
+          🕐 <span x-text="current.date"></span>
+        </div>
+      </template>
+    </div>
+
+    <div class="modal-footer">
+      <template x-if="current.link">
+        <a class="modal-link" :href="current.link" target="_blank" rel="noopener">
+          元記事を読む 🔗
+        </a>
+      </template>
+    </div>
+
+  </div>
+</div>
+
+<!-- ████████████████████  FOOTER  ████████████████████ -->
+<footer>
+  <p>🤖 このページは <strong>GitHub Actions</strong> + <strong>Claude AI</strong> により自動生成されます</p>
+  <p style="margin-top:.4rem;">
+    データ取得: Yahoo Finance / Reuters RSS |
+    価格: <a href="https://finance.yahoo.com" target="_blank">yfinance</a> |
+    翻訳: <a href="https://anthropic.com" target="_blank">Anthropic Claude</a>
+  </p>
+  <p style="margin-top:.4rem; font-size:.7rem;">※ 投資判断の参考情報です。正確性・完全性を保証するものではありません。</p>
+</footer>
+
+<!-- ESCキーでモーダルを閉じる -->
+<script>
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.body.__x && document.body.__x.$data.close();
+    }
+  });
+</script>
+
+</body>
+</html>
