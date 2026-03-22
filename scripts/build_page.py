@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from fetch_news   import get_news_data
+from fetch_news   import get_news_data, get_geopolitical_news
 from fetch_prices import get_price_data
 from translate    import translate_and_summarise
 from analyze      import generate_analysis, generate_watchlist_analysis, generate_future_outlook
@@ -28,6 +28,10 @@ def build(output: Path) -> None:
     jp_news = get_news_data("jp")
     us_news = get_news_data("us")
 
+    print("🌐 地政学・世界情勢ニュースを取得中...")
+    geo_items = get_geopolitical_news()
+    print(f"   → {len(geo_items)} 件取得")
+
     print("💹 価格データを取得中...")
     prices = get_price_data()
 
@@ -41,15 +45,15 @@ def build(output: Path) -> None:
     us_items = [item for feed in us_news["feeds"] for item in feed["items"]]
 
     print("🧠 Claude で市場解説・注目銘柄を生成中...")
-    analysis = generate_analysis(prices, jp_items, us_items)
+    analysis = generate_analysis(prices, jp_items, us_items, geo_items)
 
     print("👀 ウォッチリスト評価を生成中...")
     watchlist_analysis = generate_watchlist_analysis(
-        prices.get("watchlist", []), prices, jp_items, us_items
+        prices.get("watchlist", []), prices, jp_items, us_items, geo_items
     )
 
     print("🔮 将来の相場見通しを生成中...")
-    future_outlook = generate_future_outlook(prices, jp_items, us_items)
+    future_outlook = generate_future_outlook(prices, jp_items, us_items, geo_items)
 
     print("🎨 HTML を生成中...")
     try:

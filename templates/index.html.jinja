@@ -554,6 +554,9 @@
       {% endif %}
       <div class="watch-body">
         <div class="watch-reason">{{ w.reason }}</div>
+        {% if w.geo_note %}
+        <div class="watch-caution" style="border-left-color:#fb923c;background:rgba(251,146,60,.08);">🌏 {{ w.geo_note }}</div>
+        {% endif %}
         {% if w.points %}
         <ul class="watch-points">
           {% for pt in w.points %}<li>{{ pt }}</li>{% endfor %}
@@ -585,7 +588,7 @@
 <!-- ████  市場解説  ████ -->
 <div class="section">
   <div class="section-title">🧠 本日の市場解説 <span class="ai-badge">✨ AI Analysis</span></div>
-  {% if commentary and (commentary.overview or commentary.drivers or commentary.global_trends) %}
+  {% if commentary and (commentary.overview or commentary.drivers or commentary.global_trends or commentary.geo_impact) %}
   <div class="commentary-grid">
     {% if commentary.overview %}
     <div class="commentary-card overview-card">
@@ -599,6 +602,13 @@
       <div class="commentary-icon">🔍</div>
       <div class="commentary-label">相場を動かした要因</div>
       <div class="commentary-text">{{ commentary.drivers }}</div>
+    </div>
+    {% endif %}
+    {% if commentary.geo_impact %}
+    <div class="commentary-card" style="border-left:4px solid #fb923c;background:rgba(251,146,60,.08);">
+      <div class="commentary-icon">🌏</div>
+      <div class="commentary-label">地政学・供給チェーン影響</div>
+      <div class="commentary-text">{{ commentary.geo_impact }}</div>
     </div>
     {% endif %}
     {% if commentary.global_trends %}
@@ -699,6 +709,12 @@
           <span class="macro-theme">{{ t.theme }}</span>
         </div>
         <div class="macro-desc">{{ t.description }}</div>
+        {% if t.geo_analysis %}
+        <div class="macro-history" style="border-left:3px solid #fb923c;background:rgba(251,146,60,.07);margin-bottom:.6rem;">
+          <span class="macro-history-label">🌏 波及メカニズム</span>
+          {{ t.geo_analysis }}
+        </div>
+        {% endif %}
         <div class="macro-history">
           <span class="macro-history-label">📚 過去の類似例</span>
           {{ t.historical_parallel }}
